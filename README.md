@@ -24,6 +24,7 @@ bezug:                  # optional: Name eines früheren Auftrags
 ```
 
 ## Regeln
-- Claude Desktop schreibt nur in `auftraege/offen/` und `ENTSCHEIDUNGEN.md`.
+- Claude Desktop schreibt nur in `auftraege/offen/`, `projekte/` (Quellcode-Stand aus Claude Desktop) und `ENTSCHEIDUNGEN.md`.
+- `projekte/<name>/` ist die Quelle der Wahrheit für Inhalte und Code aus Claude Desktop. Claude Code kopiert daraus in den Projektordner auf dem Server und baut dort.
 - Claude Code (Watcher) schreibt nur in `rueckmeldungen/` und verschiebt Aufträge nach `erledigt/`.
 - Feste Vorgaben stehen in `ENTSCHEIDUNGEN.md` und gelten für beide.

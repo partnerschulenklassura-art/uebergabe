@@ -1,0 +1,78 @@
+{
+  "name": "EID – Folgeangebote verschicken",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "17 9 * * 1-5" }] }
+      },
+      "id": "a1",
+      "name": "Werktags 9:17",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "url": "https://eid.unternehmensdigitalisierung.io/api/admin/followups",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "a2",
+      "name": "Fällige Angebote holen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0],
+      "credentials": { "httpHeaderAuth": { "id": "", "name": "EID Admin (Authorization: Bearer …)" } }
+    },
+    {
+      "parameters": { "fieldToSplitOut": "followups", "options": {} },
+      "id": "a3",
+      "name": "Je Angebot",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "fromEmail": "info@photovoltaikperformancepro.com",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ $json.title }}",
+        "emailFormat": "text",
+        "text": "=Guten Tag {{ $json.name }},\n\nSie hatten sich beim Energie-Institut Deutschland eingetragen. Das könnte für Sie auch passen:\n\n{{ $json.title }}\n{{ $json.link }}\n\nBei Fragen antworten Sie einfach auf diese E-Mail.\n\nEnergie-Institut Deutschland\n\nKeine weiteren Angebote erhalten: {{ $json.unsubscribeLink }}",
+        "options": {}
+      },
+      "id": "a4",
+      "name": "E-Mail senden",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [660, 0],
+      "credentials": { "smtp": { "id": "", "name": "EID SMTP" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://eid.unternehmensdigitalisierung.io/api/admin/leads/{{ $('Je Angebot').item.json.leadId }}/followups",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"offer\": \"{{ $('Je Angebot').item.json.offer }}\" }",
+        "options": {}
+      },
+      "id": "a5",
+      "name": "Als gesendet markieren",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 0],
+      "credentials": { "httpHeaderAuth": { "id": "", "name": "EID Admin (Authorization: Bearer …)" } }
+    }
+  ],
+  "connections": {
+    "Werktags 9:17": { "main": [[{ "node": "Fällige Angebote holen", "type": "main", "index": 0 }]] },
+    "Fällige Angebote holen": { "main": [[{ "node": "Je Angebot", "type": "main", "index": 0 }]] },
+    "Je Angebot": { "main": [[{ "node": "E-Mail senden", "type": "main", "index": 0 }]] },
+    "E-Mail senden": { "main": [[{ "node": "Als gesendet markieren", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

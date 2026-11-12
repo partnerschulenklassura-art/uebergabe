@@ -19,13 +19,14 @@ for auftrag in auftraege/offen/*.md; do
   pfad="$(grep -E "^${projekt}=" "$CONF" 2>/dev/null | head -1 | cut -d= -f2-)"
   rueck="rueckmeldungen/$name.md"
 
+  [[ -n "$pfad" && "$pfad" == /var/www/* ]] && mkdir -p "$pfad"
   if [[ -z "$projekt" || -z "$pfad" || ! -d "$pfad" ]]; then
     printf -- "---\nstatus: abgelehnt\n---\nProjekt '%s' fehlt in server/projekte.conf oder Ordner existiert nicht.\n" "$projekt" >"$rueck"
   else
     echo "$(date -Is) starte $name in $pfad" >>"$LOG"
     prompt="Du bekommst einen Auftrag von Claude Desktop über das Übergabe-Repo.
 Lies zuerst $REPO/ENTSCHEIDUNGEN.md und halte dich daran.
-Arbeite ausschließlich in $pfad. Committe nach jedem lauffähigen Stand.
+Arbeite ausschließlich in $pfad. Aus $REPO/projekte/ darfst du Quellcode lesen und kopieren, im Übergabe-Repo selbst aber nichts ändern. Committe nach jedem lauffähigen Stand.
 Keine Eingriffe an Nginx, Datenbank-Schema, Systemdiensten oder Secrets – liste so etwas unter 'Offen für Andre'.
 Live schalten nur, wenn im Auftrag 'ziel: live' steht.
 
@@ -42,8 +43,8 @@ commits: <Hashes>
 ## Offen für Andre
 ## Fragen an Claude Desktop"
     ( cd "$pfad" && timeout 1800 claude -p "$prompt" \
-        --permission-mode acceptEdits \
-        --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pm2 list),Bash(pm2 jlist),Bash(pm2 describe:*),Bash(pm2 restart:*),Bash(pm2 reload:*),Bash(ls:*),Bash(cat:*),Bash(curl:*)" \
+        --permission-mode acceptEdits --add-dir "$REPO" \
+        --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pm2 list),Bash(pm2 jlist),Bash(pm2 describe:*),Bash(pm2 restart:*),Bash(pm2 reload:*),Bash(ls:*),Bash(mkdir:*),Bash(cp:*),Bash(rsync:*),Bash(cat:*),Bash(curl:*)" \
       ) >"$rueck" 2>&1 || echo -e "\n(Claude Code beendet mit Fehler/Timeout – siehe Server-Log)" >>"$rueck"
   fi
 
