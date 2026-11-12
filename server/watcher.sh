@@ -8,7 +8,9 @@ exec 9>/tmp/uebergabe-watcher.lock
 flock -n 9 || exit 0   # läuft schon
 
 cd "$REPO" || exit 1
-git pull -q --rebase || { echo "$(date -Is) pull fehlgeschlagen" >>"$LOG"; exit 1; }
+git pull -q --rebase 2>>"$LOG" || { echo "$(date -Is) pull fehlgeschlagen" >>"$LOG"; exit 1; }
+# Falls ein früherer Push scheiterte: nachholen
+git push -q 2>>"$LOG" || true
 
 shopt -s nullglob
 for auftrag in auftraege/offen/*.md; do
@@ -42,12 +44,12 @@ commits: <Hashes>
     ( cd "$pfad" && timeout 1800 claude -p "$prompt" \
         --permission-mode acceptEdits \
         --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pm2 restart:*),Bash(pm2 reload:*),Bash(ls:*),Bash(cat:*),Bash(curl:*)" \
-      ) >"$rueck" 2>>"$LOG" || echo -e "\n(Claude Code beendet mit Fehler/Timeout – siehe Server-Log)" >>"$rueck"
+      ) >"$rueck" 2>&1 || echo -e "\n(Claude Code beendet mit Fehler/Timeout – siehe Server-Log)" >>"$rueck"
   fi
 
   git mv -f "$auftrag" "auftraege/erledigt/$name.md"
   git add "$rueck"
   git commit -qm "Rückmeldung: $name"
-  git push -q || { git pull -q --rebase && git push -q; }
+  git push -q 2>>"$LOG" || { git pull -q --rebase 2>>"$LOG" && git push -q 2>>"$LOG"; } || echo "$(date -Is) PUSH FEHLGESCHLAGEN für $name" >>"$LOG"
   echo "$(date -Is) fertig $name" >>"$LOG"
 done
