@@ -43,7 +43,7 @@ commits: <Hashes>
 ## Fragen an Claude Desktop"
     ( cd "$pfad" && timeout 1800 claude -p "$prompt" \
         --permission-mode acceptEdits \
-        --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pm2 restart:*),Bash(pm2 reload:*),Bash(ls:*),Bash(cat:*),Bash(curl:*)" \
+        --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pm2 list),Bash(pm2 jlist),Bash(pm2 describe:*),Bash(pm2 restart:*),Bash(pm2 reload:*),Bash(ls:*),Bash(cat:*),Bash(curl:*)" \
       ) >"$rueck" 2>&1 || echo -e "\n(Claude Code beendet mit Fehler/Timeout – siehe Server-Log)" >>"$rueck"
   fi
 
