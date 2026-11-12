@@ -20,6 +20,7 @@ for auftrag in auftraege/offen/*.md; do
   rueck="rueckmeldungen/$name.md"
 
   [[ -n "$pfad" && "$pfad" == /var/www/* ]] && mkdir -p "$pfad"
+  [[ -n "$pfad" && "$pfad" == /var/www/* ]] && mkdir -p "$pfad"
   if [[ -z "$projekt" || -z "$pfad" || ! -d "$pfad" ]]; then
     printf -- "---\nstatus: abgelehnt\n---\nProjekt '%s' fehlt in server/projekte.conf oder Ordner existiert nicht.\n" "$projekt" >"$rueck"
   else
