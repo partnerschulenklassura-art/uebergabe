@@ -8,7 +8,7 @@ export const site = {
   // Gemeinsame Lead-API (eid-leads). Antwortet sie nicht, öffnet das Formular eine vorausgefüllte E-Mail.
   // Stufe 1: null = Formular öffnet eine vorausgefüllte E-Mail. Stufe Datenbank: '/api/leads'.
   leadEndpoint: null,
-  pvMonteurUrl: 'https://pv-monteur.unternehmensdigitalisierung.io',
+  pvMonteurUrl: 'https://pv-monteur.unternehmensdigitalisierung.io/#registrierung',
   pvMonteurAnfrageUrl: 'https://pv-monteur.unternehmensdigitalisierung.io/anfrage.html',
   solarSecureUrl: 'https://solarsecure.pro',
   stand: '5. November 2026'
@@ -21,7 +21,7 @@ export const PAGES = [
   { id: 'speicher', live: true, href: '/speicher/', nav: 'Speicher', title: 'Speicher grün und grau', text: 'Mittagsstrom abends verkaufen, Pool für den Kapazitätsmarkt' },
   { id: 'komponenten', live: false, href: '/komponenten/', nav: 'Komponenten', title: 'Komponenten', text: 'Module, Wechselrichter und Speicher über Fachpartner' },
   { id: 'planen', live: false, href: '/planen/', nav: 'Planen', title: 'Planen', text: 'Solar-Check in fünf Minuten, genaue Planung mit SolarNavi' },
-  { id: 'pruefen', live: false, href: '/pruefen/', nav: 'Prüfen', title: 'Prüfen und warten', text: 'Prüfprotokolle nach VDE mit PV-Monteur' },
+  { id: 'pruefen', live: true, href: '/pruefen/', nav: 'Prüfen', title: 'Prüfen und warten', text: 'Prüfprotokolle nach VDE mit PV-Monteur' },
   { id: 'schutz', live: false, href: '/schutz/', nav: 'Schutz', title: 'Schützen mit SolarSecure', text: 'Gegen Angriffe, Sabotage und Drohnenaufklärung' }
 ];
 
