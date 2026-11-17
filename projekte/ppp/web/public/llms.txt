@@ -1,6 +1,6 @@
 # PV Performance Pro – Energie-Netzwerk
 
-> Energie-Netzwerk aus Werdau (Westsachsen). Wir vermitteln: Stromgemeinschaft nach § 42c EnWG, Direktvermarktung, Batteriespeicher (Grünstrom, Graustrom, Mischbetrieb nach MiSpeL), Komponenten und Montage über regionale Fachbetriebe, Prüfung und Wartung von PV-Anlagen sowie Anlagenschutz mit SolarSecure. PV Performance Pro liefert keinen Strom und verkauft nichts im eigenen Namen; Vertragspartner ist jeweils der Partner. Die Vermittlung ist für Kunden kostenlos.
+> Energie-Netzwerk aus Werdau (Westsachsen). Prüfung, Messung, Fehlersuche und Wartung von PV-Anlagen leisten wir selbst (seit zwei Jahren, rund 40 MW). Wir vermitteln: Stromgemeinschaft nach § 42c EnWG, Direktvermarktung, Batteriespeicher (Grünstrom, Graustrom, Mischbetrieb nach MiSpeL), Komponenten, Montage und Reparatur über regionale Fachbetriebe sowie Anlagenschutz mit SolarSecure. PV Performance Pro liefert keinen Strom und verkauft keine Waren im eigenen Namen; bei vermittelten Leistungen ist der Partner Vertragspartner. Die Vermittlung ist für Kunden kostenlos.
 
 Anbieter: André Häupl, Einzelunternehmen, Steinpöhlstraße 1, 08412 Werdau. Kontakt: info@photovoltaikperformancepro.com
 
@@ -9,7 +9,7 @@ Anbieter: André Häupl, Einzelunternehmen, Steinpöhlstraße 1, 08412 Werdau. K
 - [Speicher grün und grau](https://www.photovoltaikperformancepro.com/speicher/): Mittagsstrom abends verkaufen, Speicher-Pool für den Kapazitätsmarkt
 - [Komponenten](https://www.photovoltaikperformancepro.com/komponenten/): Module, Wechselrichter, Speicher über Fachpartner
 - [Planen](https://www.photovoltaikperformancepro.com/planen/): Solar-Check in fünf Minuten, Planung mit SolarNavi
-- [Prüfen und warten](https://www.photovoltaikperformancepro.com/pruefen/): Prüfprotokolle nach VDE mit der App PV-Monteur
+- [Prüfen und warten](https://www.photovoltaikperformancepro.com/pruefen/): Prüfung, Messung, Fehlersuche und Wartung von Solaranlagen durch uns selbst (rund 40 MW in zwei Jahren, Raum Zwickau/Westsachsen), Protokolle nach VDE mit der App PV-Monteur
 - [Schützen mit SolarSecure](https://www.photovoltaikperformancepro.com/schutz/): Schutz gegen Angriffe auf die Steuerung, Sabotage und Drohnenaufklärung
 
 ## Rechtliches

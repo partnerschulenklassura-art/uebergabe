@@ -24,11 +24,12 @@ def page(slug, title, intro, sections, noindex=False):
 
 # ---------- AGB für Vermittlung und Werkzeuge ----------
 page('agb.html', 'Allgemeine Geschäftsbedingungen',
- 'Kurz gesagt: Wir vermitteln. Wir liefern keinen Strom und verkaufen nichts im eigenen Namen. Ihr Vertrag über Strom, Komponenten, Montage, Speicher, Prüfung oder Vermarktung kommt immer mit dem jeweiligen Partner zustande. Die Vermittlung ist für Sie kostenlos.',
+ 'Kurz gesagt: Prüfung, Messung, Fehlersuche und Wartung von Solaranlagen erbringen wir selbst, nach Angebot. Alles andere vermitteln wir: Ihr Vertrag über Strom, Komponenten, Montage, Speicher, Reparatur oder Vermarktung kommt mit dem jeweiligen Partner zustande. Die Vermittlung ist für Sie kostenlos.',
  [('§ 1 Anbieter und Geltung', [f'Anbieter ist {ANBIETER} („wir“).',
    'Diese Bedingungen gelten für die Nutzung der Website photovoltaikperformancepro.com, der Warteliste, unserer kostenlosen Werkzeuge und für unsere Vermittlung. Für SolarSecure und andere Software-Dienste für Unternehmen gelten zusätzlich unsere <a href="/softwarebedingungen.html">Softwarebedingungen</a>.']),
   ('§ 2 Was wir leisten', [[
-   'Wir bringen Sie mit passenden Partnern zusammen: Fachbetrieben für Komponenten, Montage, Speicher, Prüfung und Wartung, Direktvermarktern sowie Anlagenbetreibern und Abnehmern einer Stromgemeinschaft nach § 42c EnWG.',
+   'Wir prüfen, messen und warten Solaranlagen selbst und suchen Fehler bis zur Ursache (§ 4).',
+   'Wir bringen Sie mit passenden Partnern zusammen: Fachbetrieben für Komponenten, Montage, Speicher und Reparatur, Direktvermarktern sowie Anlagenbetreibern und Abnehmern einer Stromgemeinschaft nach § 42c EnWG.',
    'Wir informieren über Gesetze, Fristen und Rechenbeispiele. Diese Informationen sind allgemein und ersetzen keine Rechts-, Steuer-, Energie- oder Anlageberatung.',
    'Wir liefern keinen Strom, kaufen keinen Strom an und verkaufen keine Waren im eigenen Namen.',
    'Leistungen, die wir selbst gegen Entgelt erbringen, etwa als Dienstleister eines Anlagenbetreibers beim Energy Sharing, vereinbaren wir gesondert in Textform mit Preis und Leistungsbeschreibung.']]),
@@ -36,16 +37,23 @@ page('agb.html', 'Allgemeine Geschäftsbedingungen',
    'Ein Eintrag in die Warteliste und jede Anfrage über die Website sind unverbindlich und kostenlos. Sie begründen keinen Vertrag über eine Leistung.',
    'Verträge über die vermittelten Leistungen schließen Sie ausschließlich mit dem Partner. Es gelten dessen Bedingungen, Preise, Gewährleistung und Widerrufsbelehrung. Der Partner nennt Ihnen diese vor Vertragsschluss.',
    'Wir sind nicht berechtigt, für den Partner Erklärungen abzugeben oder entgegenzunehmen, sofern wir nicht ausdrücklich etwas anderes mitteilen.']]),
-  ('§ 4 Vergütung und Provision', ['Die Vermittlung ist für Sie kostenlos. Für eine erfolgreiche Vermittlung erhalten wir vom Partner eine Provision. Auf Nachfrage nennen wir Ihnen deren Höhe für Ihren Fall. Wir empfehlen Partner nach Eignung für Ihre Anlage, Region und Verfügbarkeit.']),
-  ('§ 5 Weitergabe Ihrer Angaben', ['Ihre Angaben geben wir an einen Partner nur weiter, wenn Sie dem zugestimmt haben, und nur so weit, wie es für Ihre Anfrage nötig ist. Einzelheiten stehen in der <a href="/datenschutz.html">Datenschutzerklärung</a>.']),
-  ('§ 6 Kostenlose Werkzeuge', ['Rechner, Solar-Check und ähnliche Werkzeuge liefern Schätzwerte auf Grundlage Ihrer Eingaben und allgemeiner Annahmen, etwa zu Wetter, Börsenpreisen und Verbrauch. Sie ersetzen keine Planung durch eine Fachkraft. Wir übernehmen keine Gewähr dafür, dass die tatsächlichen Werte den Schätzungen entsprechen.']),
-  ('§ 7 Haftung', [[
+  ('§ 4 Prüfung, Messung und Wartung durch uns', [[
+   'Vor jedem Auftrag erhalten Sie ein Angebot in Textform mit Leistungsumfang und Preis. Der Vertrag kommt zustande, wenn Sie das Angebot annehmen.',
+   'Anfahrt berechnen wir mit 0,50 € je gefahrenem Kilometer, sofern das Angebot nichts anderes sagt.',
+   'Wir prüfen und messen nach den anerkannten Regeln der Technik, insbesondere DIN VDE 0100-600 und IEC 62446-1, und dokumentieren mit der App PV-Monteur. Sie erhalten ein Protokoll mit allen Messwerten und Befunden.',
+   'Sie verschaffen uns Zugang zur Anlage, zu Zählerplatz, Wechselrichtern und Unterlagen und stimmen nötige Abschaltungen mit uns ab.',
+   'Spezielle Messungen, etwa mit einem Kabelmesswagen, und Reparaturen vergeben wir nur nach Ihrer Freigabe an Fachfirmen. Diese rechnen direkt mit Ihnen ab, wenn nichts anderes vereinbart ist.',
+   'Ist Gefahr im Verzug, etwa bei einem Isolationsfehler, dürfen wir die Anlage oder Anlagenteile sofort abschalten und informieren Sie umgehend.']]),
+  ('§ 5 Vergütung und Provision', ['Für Prüfung, Messung und Wartung gilt der Preis aus dem Angebot. Die Vermittlung ist für Sie kostenlos. Für eine erfolgreiche Vermittlung erhalten wir vom Partner eine Provision. Auf Nachfrage nennen wir Ihnen deren Höhe für Ihren Fall. Wir empfehlen Partner nach Eignung für Ihre Anlage, Region und Verfügbarkeit.']),
+  ('§ 6 Weitergabe Ihrer Angaben', ['Ihre Angaben geben wir an einen Partner nur weiter, wenn Sie dem zugestimmt haben, und nur so weit, wie es für Ihre Anfrage nötig ist. Einzelheiten stehen in der <a href="/datenschutz.html">Datenschutzerklärung</a>.']),
+  ('§ 7 Kostenlose Werkzeuge', ['Rechner, Solar-Check und ähnliche Werkzeuge liefern Schätzwerte auf Grundlage Ihrer Eingaben und allgemeiner Annahmen, etwa zu Wetter, Börsenpreisen und Verbrauch. Sie ersetzen keine Planung durch eine Fachkraft. Wir übernehmen keine Gewähr dafür, dass die tatsächlichen Werte den Schätzungen entsprechen.']),
+  ('§ 8 Haftung', [[
    'Wir haften unbeschränkt bei Vorsatz und grober Fahrlässigkeit, bei Verletzung von Leben, Körper oder Gesundheit und nach dem Produkthaftungsgesetz.',
    'Bei leichter Fahrlässigkeit haften wir nur bei Verletzung einer wesentlichen Pflicht, deren Erfüllung die Durchführung des Vertrags überhaupt erst ermöglicht und auf deren Einhaltung Sie regelmäßig vertrauen dürfen, und nur für den vorhersehbaren, typischen Schaden.',
    'Partner erbringen ihre Leistungen selbstständig und in eigener Verantwortung. Für deren Leistung haften wir nicht. Unsere Pflicht beschränkt sich auf die sorgfältige Auswahl und Vermittlung.']]),
-  ('§ 8 Widerrufsrecht', ['Die Vermittlung ist unentgeltlich und begründet keinen Fernabsatzvertrag über eine Leistung. Schließen Sie mit uns als Verbraucher einen entgeltlichen Vertrag über Fernkommunikationsmittel, erhalten Sie die Widerrufsbelehrung mit dem Angebot. Wird ein solcher Vertrag über unsere Website geschlossen, stellen wir dort eine Widerrufsfunktion nach § 356a BGB bereit.']),
-  ('§ 9 Streitbeilegung', ['Zur Teilnahme an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle sind wir nicht verpflichtet und nicht bereit.']),
-  ('§ 10 Schlussbestimmungen', [[
+  ('§ 9 Widerrufsrecht', ['Die Vermittlung ist unentgeltlich und begründet keinen Fernabsatzvertrag über eine Leistung. Schließen Sie, etwa über eine Prüfung, mit uns als Verbraucher einen entgeltlichen Vertrag über Fernkommunikationsmittel, erhalten Sie die Widerrufsbelehrung mit dem Angebot. Wird ein solcher Vertrag über unsere Website geschlossen, stellen wir dort eine Widerrufsfunktion nach § 356a BGB bereit.']),
+  ('§ 10 Streitbeilegung', ['Zur Teilnahme an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle sind wir nicht verpflichtet und nicht bereit.']),
+  ('§ 11 Schlussbestimmungen', [[
    'Es gilt deutsches Recht. Für Verbraucher gilt dies nur, soweit ihnen nicht zwingende Vorschriften des Staates ihres gewöhnlichen Aufenthalts weitergehenden Schutz geben.',
    'Sind Sie Kaufmann, juristische Person des öffentlichen Rechts oder öffentlich-rechtliches Sondervermögen, ist Gerichtsstand Zwickau.',
    'Sollte eine Bestimmung unwirksam sein, bleiben die übrigen wirksam.']])])

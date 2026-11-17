@@ -13,7 +13,7 @@ const ORG = {
   '@id': `${SITE}/#org`,
   name: 'PV Performance Pro',
   alternateName: ['PPP', 'PV Performance Pro – Energie-Netzwerk'],
-  description: 'Energie-Netzwerk in Westsachsen: vermittelt Stromgemeinschaft, Direktvermarktung, Speicher, Komponenten, Prüfung und Anlagenschutz an regionale Partner.',
+  description: 'Energie-Netzwerk in Westsachsen: prüft und wartet Solaranlagen selbst und vermittelt Stromgemeinschaft, Direktvermarktung, Speicher, Komponenten und Anlagenschutz an regionale Partner.',
   url: `${SITE}/`,
   logo: `${SITE}/favicon.svg`,
   email: 'info@photovoltaikperformancepro.com',
@@ -31,7 +31,7 @@ function head(page, html) {
   const graph = [ORG];
   if (page === 'start') graph.push({ '@type': 'WebSite', '@id': `${SITE}/#web`, url: `${SITE}/`, name: 'PV Performance Pro', inLanguage: 'de-DE', publisher: { '@id': `${SITE}/#org` } });
   else {
-    graph.push({ '@type': 'Service', name: title.split(' – ')[0], description: desc, url, provider: { '@id': `${SITE}/#org` }, areaServed: 'DE' });
+    graph.push({ '@type': 'Service', name: title.split(' – ')[0], description: desc, url, provider: { '@id': `${SITE}/#org` }, areaServed: page === 'pruefen' ? 'Westsachsen' : 'DE' });
     graph.push({ '@type': 'BreadcrumbList', itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Start', item: `${SITE}/` },
       { '@type': 'ListItem', position: 2, name: title.split(' – ')[0], item: url }] });
