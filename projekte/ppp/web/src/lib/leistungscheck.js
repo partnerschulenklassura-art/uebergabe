@@ -15,7 +15,7 @@ import { ursachen as ursachenBasis, URSACHEN as URSACHEN_BASIS } from './mehrwer
 
 export const ANNAHMEN = {
   breite: 50.7, // Westsachsen, falls kein Standort angegeben
-  referenzKwhKwp: 950, // langjähriger Ertrag je kWp bei Süd, 35°, ohne Verluste (FfE, regional ±10 %); besser: PVGIS
+  referenzKwhKwp: 950, // langjähriger Ertrag je kWp bei Süd, 35°, nach üblichen Systemverlusten außer Wechselrichter und Kabel (FfE, regional ±10 %); besser: PVGIS
   rho: { cu: 0.0178, al: 0.0286 }, // Ω·mm²/m bei 20 °C
   alpha: { cu: 0.00393, al: 0.00403 }, // Temperaturbeiwert je K
   leiterTemp: 50, // °C mittlere Leitertemperatur unter Last
@@ -27,6 +27,7 @@ export const ANNAHMEN = {
   tMin: -10, // °C für die Leerlaufspannung
   tMax: 70, // °C Zelltemperatur für die MPP-Spannung
   wrWirkungsgrad: 0.97,
+  sonstigeVerluste: 0.07, // nur bei PVGIS-Referenz (loss=0): Fehlanpassung 2 %, Leistungstoleranz und LID 2 %, Verfügbarkeit 1 %, normale Verschmutzung 2 %
   degradation: { mono: 0.005, poly: 0.005, duennschicht: 0.008 },
   garantieJahr1: { mono: 0.98, poly: 0.975, duennschicht: 0.95 },
   stufen: { gut: -0.05, auffaellig: -0.15 }, // Abweichung vom Soll heute
@@ -197,7 +198,7 @@ export function normalisiere(e) {
     alter: Math.max(0, stichjahr - jahr),
     stichjahr,
     ac: e.ac || [],
-    referenz: num(e.wetter?.referenzKwhKwp), // PVGIS für diese Anlage, ohne Systemverluste
+    referenz: num(e.wetter?.referenzKwhKwp), // PVGIS PVcalc mit loss=0 für diese Anlage (Werdau, Süd 30°: 1.189 kWh/kWp)
     wetterFaktor: num(e.wetter?.zeitraumFaktor, 1), // Einstrahlung im Zeitraum / langjähriges Mittel
     umgebung: e.umgebung || []
   };
@@ -216,8 +217,8 @@ export function planung(n) {
       befunde.push({ id: 'ausrichtung', schwere: 'hinweis', text: `${f.name || 'Fläche'}: Ausrichtung ${f.azimut}° und Neigung ${f.neigung}° bringen nur ${Math.round(ausrichtung * 100)} % einer Südfläche. Kein Fehler, aber die Erwartung muss dazu passen.` });
     return { ...f, ausrichtung, reihen: r };
   });
-  const basis = n.referenz || a.referenzKwhKwp;
-  const ideal = sum(flaechen, f => f.kwp * basis * f.ausrichtung) * a.wrWirkungsgrad;
+  const basis = n.referenz ? n.referenz * (1 - a.sonstigeVerluste) : a.referenzKwhKwp;
+  const ideal = sum(flaechen, f => f.kwp * (num(f.pvgisKwhKwp) ? f.pvgisKwhKwp * (1 - a.sonstigeVerluste) : basis * f.ausrichtung)) * a.wrWirkungsgrad;
 
   const leitungen = n.ac.map(x => acLeitung(x, num(x.kwAC, n.kwAC), num(n.netzSpannung, 400))).filter(Boolean);
   const acAnteil = sum(leitungen, l => l.energieAnteil);

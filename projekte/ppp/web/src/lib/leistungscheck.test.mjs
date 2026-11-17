@@ -144,6 +144,14 @@ assert.notEqual(alsFrei.wert.eegCt, alsDach.wert.eegCt, 'Freifläche: andere Ver
 const prK = alsHtml(protokoll(komp));
 assert.ok(prK.includes('Verbaute Komponenten') && prK.includes('Freifläche') && prK.includes('Steckverbinder'));
 
+// PVGIS-Referenz Werdau, Süd 30°, loss=0: 1.189,11 kWh/kWp (Probeaufruf 17.11.2026) → Soll im 1. Jahr gut 1.070 kWh/kWp
+const pv = leistungscheck({ kwp: 10, inbetriebnahme: { jahr: 2026 }, felder: [{ kwp: 10, azimut: 0, neigung: 30 }], wetter: { referenzKwhKwp: 1189.11 }, stichjahr: 2026 });
+near(pv.planung.ideal / 10, 1189.11 * 0.93 * 0.97, 0.5);
+assert.ok(pv.planung.ideal / 10 > 1000 && pv.planung.ideal / 10 < 1100);
+// je Fläche eigener PVGIS-Wert (Ost/West)
+const ow = leistungscheck({ kwp: 20, inbetriebnahme: { jahr: 2026 }, felder: [{ kwp: 10, azimut: -90, neigung: 15, pvgisKwhKwp: 1010 }, { kwp: 10, azimut: 90, neigung: 15, pvgisKwhKwp: 1000 }], stichjahr: 2026 });
+near(ow.planung.ideal, 20 * 1005 * 0.93 * 0.97, 1);
+
 // Protokoll mit Prüfsumme
 const pr = await mitPruefsumme(protokoll(ac, { nummer: 'LC-2026-0001', erstellt: '2026-11-17' }));
 assert.equal(pr.pruefsumme.length, 64);
