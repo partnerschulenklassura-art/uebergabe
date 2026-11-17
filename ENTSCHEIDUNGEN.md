@@ -12,3 +12,5 @@
 - Abstand zu Verschmutzern über `out tags bb` reicht vorerst; Straße und Bahn bei Bedarf später mit `out geom`.
 - DWD-Faktoren (horizontal) werden im Rechenkern mit den PVGIS-Monatserträgen der Anlage gewichtet (`wetterFaktor()` in `projekte/ppp/web/src/lib/leistungscheck.js`). Der Dienst liefert dafür die Monatsfaktoren, PVGIS die Monatserträge.
 - Der Dienst `/var/www/eid/ppp-api` wird erst mit der Seite „Leistungscheck“ gestartet.
+- Ortssuche: Die Seite verlangt eine fünfstellige PLZ; `addressdetails=1` und „Ort, Kreis“ passen; eine PM2-Instanz für ppp-api (17.11.2026).
+- Go-live-Skript: maßgeblich ist `projekte/ppp/stufe3/leistungscheck-online.sh` (Schutzschritte aus der Prüfung übernommen); die Kopie in `/var/www/eid/ppp-stufe3/` ist überholt.

@@ -147,8 +147,16 @@ export default function Leistungscheck() {
 
           <form className="form glass-strong rim rounded-[26px] shadow-[0_2px_4px_rgba(0,0,0,.25),0_40px_80px_-30px_rgba(0,0,0,.8)]" onSubmit={start}>
             <label>
-              <span className="lbl">Adresse der Anlage</span>
-              <input required autoComplete="street-address" placeholder="Straße, PLZ Ort" value={f.adresse} onChange={set('adresse')} />
+              <span className="lbl">Adresse der Anlage, mit Postleitzahl</span>
+              <input
+                required
+                autoComplete="street-address"
+                placeholder="Straße, PLZ Ort"
+                pattern=".*\b[0-9]{5}\b.*"
+                title="Bitte mit fünfstelliger Postleitzahl, zum Beispiel: Hauptstraße 1, 08412 Werdau"
+                value={f.adresse}
+                onChange={set('adresse')}
+              />
             </label>
             <fieldset className="choices">
               <legend>Art der Anlage</legend>
