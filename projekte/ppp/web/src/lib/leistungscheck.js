@@ -160,6 +160,27 @@ export function stringauslegung(modul, wr, moduleJeString) {
 /** Kappung bei großem DC/AC-Verhältnis (Näherung). */
 export const kappung = verhaeltnis => (verhaeltnis <= 1.15 ? 0 : clamp((verhaeltnis - 1.15) * 0.08, 0, 0.1));
 
+/** Wetterfaktor. Mit DWD-Monatsfaktoren und PVGIS-Monatserträgen gewichtet nach dem Ertrag der Anlage je Monat
+ *  (DWD misst horizontal, die Module sind geneigt; so zählt ein sonniger Juni mehr als ein sonniger Dezember). */
+export function wetterFaktor(w) {
+  if (!w) return 1;
+  const monate = w.monate || [];
+  const pvgis = w.referenzMonate || []; // 12 Werte Januar … Dezember, kWh/kWp
+  if (monate.length && pvgis.length === 12) {
+    let ist = 0;
+    let soll = 0;
+    for (const m of monate) {
+      const idx = Number(String(m.monat).slice(5, 7)) - 1;
+      const e = pvgis[idx];
+      if (!(e > 0) || !(m.faktor > 0)) continue;
+      ist += e * m.faktor;
+      soll += e;
+    }
+    if (soll > 0) return ist / soll;
+  }
+  return num(w.zeitraumFaktor, 1);
+}
+
 export function normalisiere(e) {
   const breite = num(e.standort?.breite, ANNAHMEN.breite);
   const felder = (e.felder?.length ? e.felder : [{ kwp: e.kwp, azimut: 0, neigung: 35 }]).map(f => ({
@@ -199,7 +220,7 @@ export function normalisiere(e) {
     stichjahr,
     ac: e.ac || [],
     referenz: num(e.wetter?.referenzKwhKwp), // PVGIS PVcalc mit loss=0 für diese Anlage (Werdau, Süd 30°: 1.189 kWh/kWp)
-    wetterFaktor: num(e.wetter?.zeitraumFaktor, 1), // Einstrahlung im Zeitraum / langjähriges Mittel
+    wetterFaktor: wetterFaktor(e.wetter), // Einstrahlung im Zeitraum / langjähriges Mittel
     umgebung: e.umgebung || []
   };
 }

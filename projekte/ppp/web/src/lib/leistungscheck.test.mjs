@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
-import { leistungscheck, ausrichtungsFaktor, acLeitung, reihen, stringauslegung, winterSonne } from './leistungscheck.js';
+import { wetterFaktor, leistungscheck, ausrichtungsFaktor, acLeitung, reihen, stringauslegung, winterSonne } from './leistungscheck.js';
 import { protokoll, mitPruefsumme, pruefsumme, alsHtml } from './protokoll.js';
 
 const near = (a, b, tol) => assert.ok(Math.abs(a - b) <= tol, `${a} != ${b} (±${tol})`);
@@ -151,6 +151,14 @@ assert.ok(pv.planung.ideal / 10 > 1000 && pv.planung.ideal / 10 < 1100);
 // je Fläche eigener PVGIS-Wert (Ost/West)
 const ow = leistungscheck({ kwp: 20, inbetriebnahme: { jahr: 2026 }, felder: [{ kwp: 10, azimut: -90, neigung: 15, pvgisKwhKwp: 1010 }, { kwp: 10, azimut: 90, neigung: 15, pvgisKwhKwp: 1000 }], stichjahr: 2026 });
 near(ow.planung.ideal, 20 * 1005 * 0.93 * 0.97, 1);
+
+// Wetter Werdau 11/2025–10/2026 (DWD) gewichtet mit PVGIS-Monatserträgen Werdau Süd 30°
+const dwd = [['2025-11', 1.123], ['2025-12', 1.168], ['2026-01', 1.265], ['2026-02', 1.01], ['2026-03', 1.23], ['2026-04', 1.128], ['2026-05', 1.167], ['2026-06', 1.052], ['2026-07', 1.067], ['2026-08', 1.156], ['2026-09', 1.136], ['2026-10', 0.96]].map(([monat, faktor]) => ({ monat, faktor }));
+const pvgisM = [38.7, 61.8, 98.9, 131.8, 146.1, 145.5, 146.8, 133.7, 111.3, 83.8, 51.1, 39.6];
+const wf = wetterFaktor({ monate: dwd, referenzMonate: pvgisM, zeitraumFaktor: 1.114 });
+assert.ok(wf > 1.1 && wf < 1.13, `Wetterfaktor ${wf}`);
+assert.equal(wetterFaktor({ zeitraumFaktor: 1.114 }), 1.114);
+assert.equal(wetterFaktor(null), 1);
 
 // Protokoll mit Prüfsumme
 const pr = await mitPruefsumme(protokoll(ac, { nummer: 'LC-2026-0001', erstellt: '2026-11-17' }));

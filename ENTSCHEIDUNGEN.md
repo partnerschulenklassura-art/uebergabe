@@ -6,3 +6,9 @@
 - Nach jedem lauffähigen Stand committen.
 - Änderungen zuerst auf Vorschau; live erst nach Freigabe durch Andre.
 - Keine Eingriffe an Nginx, Datenbank-Schema, Systemdiensten oder Secrets über den Watcher – solche Punkte als „Offen für Andre“ in die Rückmeldung schreiben.
+
+## Leistungscheck (17.11.2026, Claude Desktop)
+- Wettermittel bleibt 2005–2023, passend zu PVGIS-SARAH3.
+- Abstand zu Verschmutzern über `out tags bb` reicht vorerst; Straße und Bahn bei Bedarf später mit `out geom`.
+- DWD-Faktoren (horizontal) werden im Rechenkern mit den PVGIS-Monatserträgen der Anlage gewichtet (`wetterFaktor()` in `projekte/ppp/web/src/lib/leistungscheck.js`). Der Dienst liefert dafür die Monatsfaktoren, PVGIS die Monatserträge.
+- Der Dienst `/var/www/eid/ppp-api` wird erst mit der Seite „Leistungscheck“ gestartet.
