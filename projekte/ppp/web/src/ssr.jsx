@@ -9,8 +9,9 @@ import Komponenten from './pages/Komponenten.jsx';
 import Planen from './pages/Planen.jsx';
 import PruefenPage from './pages/PruefenPage.jsx';
 import Schutz from './pages/Schutz.jsx';
+import Leistungscheck from './pages/Leistungscheck.jsx';
 
-const PAGES = { start: Start, strom: Strom, speicher: Speicher, komponenten: Komponenten, planen: Planen, pruefen: PruefenPage, schutz: Schutz };
+const PAGES = { start: Start, strom: Strom, speicher: Speicher, komponenten: Komponenten, planen: Planen, pruefen: PruefenPage, schutz: Schutz, leistungscheck: Leistungscheck };
 
 export function render(page) {
   const Page = PAGES[page];

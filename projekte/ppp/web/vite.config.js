@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { resolve } from 'node:path';
 
 // Eine HTML-Datei je Bereich, damit jede Unterseite eigenen Titel und eigene Beschreibung für Suchmaschinen hat.
-const pages = ['strom', 'speicher', 'komponenten', 'planen', 'pruefen', 'schutz'];
+const pages = ['strom', 'speicher', 'komponenten', 'planen', 'pruefen', 'schutz', 'leistungscheck'];
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],

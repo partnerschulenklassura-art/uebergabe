@@ -22,6 +22,7 @@ export const PAGES = [
   { id: 'komponenten', live: false, href: '/komponenten/', nav: 'Komponenten', title: 'Komponenten', text: 'Module, Wechselrichter und Speicher über Fachpartner' },
   { id: 'planen', live: false, href: '/planen/', nav: 'Planen', title: 'Planen', text: 'Solar-Check in fünf Minuten, genaue Planung mit SolarNavi' },
   { id: 'pruefen', live: true, href: '/pruefen/', nav: 'Prüfen', title: 'Prüfen und warten', text: 'Prüfprotokolle nach VDE mit PV-Monteur' },
+  { id: 'leistungscheck', live: true, href: '/leistungscheck/', nav: 'Leistungscheck', title: 'Leistungscheck', text: 'Soll gegen Ist, Ursachen, Wert und Protokoll in zwei Minuten' },
   { id: 'schutz', live: false, href: '/schutz/', nav: 'Schutz', title: 'Schützen mit SolarSecure', text: 'Gegen Angriffe, Sabotage und Drohnenaufklärung' }
 ];
 

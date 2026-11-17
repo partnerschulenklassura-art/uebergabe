@@ -18,7 +18,8 @@ const PAGES = {
   komponenten: lazy(() => import('./pages/Komponenten.jsx')),
   planen: lazy(() => import('./pages/Planen.jsx')),
   pruefen: lazy(() => import('./pages/PruefenPage.jsx')),
-  schutz: lazy(() => import('./pages/Schutz.jsx'))
+  schutz: lazy(() => import('./pages/Schutz.jsx')),
+  leistungscheck: lazy(() => import('./pages/Leistungscheck.jsx'))
 };
 
 const root = document.getElementById('root');

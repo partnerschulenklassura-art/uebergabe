@@ -160,6 +160,11 @@ assert.ok(wf > 1.1 && wf < 1.13, `Wetterfaktor ${wf}`);
 assert.equal(wetterFaktor({ zeitraumFaktor: 1.114 }), 1.114);
 assert.equal(wetterFaktor(null), 1);
 
+// Lücke in der Vergütungstabelle (Mitte 2012): Wert fällt nicht auf null
+const luecke = leistungscheck({ kwp: 30, inbetriebnahme: { jahr: 2012, monat: 6 }, ist: { zaehlerKwh: 25000 }, stichjahr: 2026 });
+assert.ok(luecke.wert.marktwert > 0, `Marktwert ${luecke.wert.marktwert}`);
+assert.equal(luecke.wert.verguetungQuelle, 'geschaetzt');
+
 // Protokoll mit Prüfsumme
 const pr = await mitPruefsumme(protokoll(ac, { nummer: 'LC-2026-0001', erstellt: '2026-11-17' }));
 assert.equal(pr.pruefsumme.length, 64);

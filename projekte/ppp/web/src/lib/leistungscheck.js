@@ -11,6 +11,7 @@
 // Rechenwerte aus Angaben und Datenblättern, und jede Annahme steht in ANNAHMEN.
 
 import { anlagenwert } from './anlagenwert.js';
+import { eegSatz } from './historie.js';
 import { ursachen as ursachenBasis, URSACHEN as URSACHEN_BASIS } from './mehrwert.js';
 
 export const ANNAHMEN = {
@@ -461,14 +462,28 @@ export function vorOrt(n, p, z, liste) {
 // ---------------------------------------------------------------------------
 // Wert
 
+/** Einspeisevergütung: Angabe des Eigentümers, sonst Tabelle; Lücken in der Tabelle mit dem nächsten
+ *  früheren bekannten Satz füllen (höchstens 24 Monate zurück), damit der Wert nicht auf null fällt. */
+export function verguetung(n) {
+  if (num(n.eegCt) != null) return { ct: num(n.eegCt), quelle: 'angabe' };
+  const kwp = n.kwp || 1;
+  for (let i = 0; i <= 24; i++) {
+    const d = new Date(n.jahr, n.monat - 1 - i, 1);
+    const r = eegSatz(d.getFullYear(), d.getMonth() + 1, kwp, n.art);
+    if (r.ct != null) return { ct: r.ct, quelle: i === 0 ? 'tabelle' : 'geschaetzt' };
+  }
+  return { ct: null, quelle: 'unbekannt' };
+}
+
 export function wert(n, z) {
   if (!z.bekannt) return null;
+  const verg = verguetung(n);
   const basis = {
     kwp: n.kwp,
     baujahr: n.jahr,
     monat: n.monat,
     art: n.art,
-    eegCt: n.eegCt,
+    eegCt: verg.ct ?? undefined,
     evAnteil: n.evAnteil,
     baukosten: n.baukosten,
     zustand: n.zustand,
@@ -488,7 +503,8 @@ export function wert(n, z) {
     marktwertBehoben: behoben.marktwert,
     wertverlust: Math.max(0, behoben.marktwert - heute.marktwert), // so viel ist eine Reparatur höchstens wert
     restjahre: heute.eingabe.restjahre,
-    eegCt: heute.eingabe.eegCt
+    eegCt: heute.eingabe.eegCt,
+    verguetungQuelle: verg.quelle
   };
 }
 

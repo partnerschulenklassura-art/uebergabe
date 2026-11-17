@@ -1796,3 +1796,17 @@ body { background: #0e1620; color: var(--papier); }
 .brand-name { display: grid; line-height: 1; }
 .brand-name small { font: 500 .72rem/1.2 var(--text); letter-spacing: .02em; color: rgba(247, 247, 244, .6); margin-top: .2rem; }
 .footer-role { margin-top: .75rem; font-size: .92rem; color: rgba(247,247,244,.55); max-width: 52ch; }
+
+/* Leistungscheck: Auswahlfelder im dunklen Formular wie die Eingabefelder */
+.wl .form select {
+  width: 100%;
+  padding: 0.8rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(247, 247, 244, 0.16);
+  background: rgba(8, 14, 22, 0.55);
+  color: var(--papier);
+  font: inherit;
+}
+.wl .form select option { color: #14202b; }
+.wl .form select:focus-visible { outline: 2px solid var(--sonne); outline-offset: 2px; }
+.wl .form .btn:disabled { opacity: 0.6; cursor: progress; }
