@@ -30,7 +30,11 @@ export const ANNAHMEN = {
   degradation: { mono: 0.005, poly: 0.005, duennschicht: 0.008 },
   garantieJahr1: { mono: 0.98, poly: 0.975, duennschicht: 0.95 },
   stufen: { gut: -0.05, auffaellig: -0.15 }, // Abweichung vom Soll heute
-  restVorOrt: 0.05 // unerklärter Rest, ab dem eine Messung vor Ort nötig ist
+  restVorOrt: 0.05, // unerklärter Rest, ab dem eine Messung vor Ort nötig ist
+  dcVerlustGrenze: 0.01, // Planungswert DC-Leitungen
+  solarkabel: ['solarkabel', 'h1z2z2-k', 'pv1-f'], // für DC im Freien zugelassen (DIN EN 50618)
+  // Neupreise je kWp für Freiflächen [klein, groß], wo sie vom Dach abweichen (Annahme, Marktspiegel 2026)
+  freiflaeche: { unterkonstruktion: { preis: [110, 75], jahre: 30 }, montage: { preis: [150, 70], jahre: 30 }, elektro: { preis: [220, 130], jahre: 30 } }
 };
 
 const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
@@ -77,6 +81,38 @@ export function acLeitung(abschnitt, kwAC, uNetz = 400, cosPhi = 1) {
     energieAnteil: (verlustKw / kwAC) * a.lastFaktorVerlust,
     spannungsfall
   };
+}
+
+/** Verlust einer DC-Stringleitung (Hin- und Rückleiter) bei MPP-Strom und -Spannung. */
+export function dcLeitung(abschnitt, strom, spannung) {
+  const mat = abschnitt.material === 'al' ? 'al' : 'cu';
+  const a = ANNAHMEN;
+  const rho = a.rho[mat] * (1 + a.alpha[mat] * (a.leiterTemp - 20));
+  const querschnitt = num(abschnitt.querschnitt);
+  const laenge = num(abschnitt.laenge); // einfache Länge in m
+  if (!querschnitt || !laenge || !strom || !spannung) return null;
+  const r = (2 * rho * laenge) / querschnitt;
+  const verlustAnteil = (strom * r) / spannung; // = I²R / (U·I)
+  return { name: abschnitt.name || 'DC-Leitung', material: mat, querschnitt, laenge, strom, verlustAnteil, energieAnteil: verlustAnteil * a.lastFaktorVerlust };
+}
+
+/** Kabel und Steckverbinder als Qualitätsmerkmal. */
+export function kabelQualitaet(n) {
+  const befunde = [];
+  for (const k of n.dc) {
+    const typ = String(k.kabeltyp || '').toLowerCase();
+    if (!typ) continue;
+    if (!ANNAHMEN.solarkabel.includes(typ))
+      befunde.push({ id: 'dcKabeltyp', schwere: 'befund', text: `${k.name || 'DC-Leitung'}: Kabeltyp „${k.kabeltyp}“ ist kein Solarkabel nach DIN EN 50618. Im Freien altert die Isolierung schneller, Isolationsfehler werden wahrscheinlicher.` });
+    if (num(k.querschnitt) && k.querschnitt < 4)
+      befunde.push({ id: 'dcQuerschnitt', schwere: 'hinweis', text: `${k.name || 'DC-Leitung'}: ${k.querschnitt} mm² ist für Stringleitungen knapp, üblich sind 4 oder 6 mm².` });
+  }
+  if (n.steckverbinder?.mischung)
+    befunde.push({ id: 'steckverbinder', schwere: 'befund', text: 'Steckverbinder verschiedener Hersteller sind ineinander gesteckt. Das ist nicht zulässig und eine häufige Ursache für heiße Kontakte, Lichtbögen und Ertragsverlust.' });
+  for (const k of n.ac)
+    if (k.material === 'al' && !k.alKlemmen)
+      befunde.push({ id: 'alKlemmen', schwere: 'hinweis', text: `${k.name || 'AC-Leitung'}: Aluminium braucht dafür zugelassene Klemmen und Kontaktfett. Prüfen, ob das so ausgeführt ist.` });
+  return befunde;
 }
 
 // ---------------------------------------------------------------------------
@@ -131,17 +167,28 @@ export function normalisiere(e) {
     azimut: num(f.azimut, 0),
     neigung: num(f.neigung, 35)
   }));
-  const kwp = num(e.kwp, sum(felder, f => f.kwp));
-  const wr = (e.wechselrichter || []).map(w => ({ ...w, anzahl: num(w.anzahl, 1), kwAC: num(w.kwAC, 0) }));
-  const kwAC = sum(wr, w => w.kwAC * w.anzahl) || kwp / 1.1;
-  const typ = ANNAHMEN.degradation[e.module?.typ] ? e.module.typ : 'mono';
+  const modultypen = (Array.isArray(e.module) ? e.module : e.module ? [e.module] : []).map(m => ({
+    ...m,
+    typ: ANNAHMEN.degradation[m.typ] ? m.typ : 'mono',
+    anzahl: num(m.anzahl, 0),
+    wp: num(m.wp, 0)
+  }));
+  const kwpModule = sum(modultypen, m => (m.anzahl * m.wp) / 1000);
+  const kwpGesamt = num(e.kwp, null) ?? (kwpModule || sum(felder, f => f.kwp));
+  const wr = (e.wechselrichter || []).map(w => ({ ...w, anzahl: num(w.anzahl, 1), kwAC: num(w.kwAC, 0), strings: w.strings || (w.moduleJeString ? [{ modul: 0, moduleJeString: w.moduleJeString }] : []) }));
+  const kwAC = sum(wr, w => w.kwAC * w.anzahl) || kwpGesamt / 1.1;
+  const typ = modultypen[0]?.typ || 'mono';
   const jahr = num(e.inbetriebnahme?.jahr, 2010);
   const stichjahr = num(e.stichjahr, 2026);
   return {
     ...e,
     breite,
-    felder: felder.map(f => ({ ...f, kwp: f.kwp || kwp / felder.length })),
-    kwp,
+    felder: felder.map(f => ({ ...f, kwp: f.kwp || kwpGesamt / felder.length })),
+    kwp: kwpGesamt,
+    kwpModule,
+    modultypen,
+    art: e.art === 'frei' ? 'frei' : 'dach',
+    dc: e.dc || [],
     wr,
     kwAC,
     typ,
@@ -185,13 +232,46 @@ export function planung(n) {
   const kapp = kappung(dcAc);
   if (dcAc > a.dcAcGrenze) befunde.push({ id: 'dcac', schwere: 'hinweis', text: `DC/AC-Verhältnis ${dcAc.toFixed(2)}: an sonnigen Mittagen wird gekappt, geschätzt ${(kapp * 100).toFixed(1)} % im Jahr.` });
 
-  const strings = n.wr.map(w => stringauslegung(n.module, w, w.moduleJeString ?? n.module?.moduleJeString)).filter(Boolean);
-  for (const s of strings) befunde.push(...s.befunde);
-  const stringVerlust = Math.max(0, ...strings.map(s => s.verlust));
+  const strings = n.wr.flatMap(w =>
+    w.strings.map(st => {
+      const modul = n.modultypen[num(st.modul, 0)];
+      const r = stringauslegung(modul, w, st.moduleJeString);
+      if (!r) return null;
+      const name = [w.hersteller, w.typ].filter(Boolean).join(' ') || 'Wechselrichter';
+      r.befunde = r.befunde.map(b => ({ ...b, text: `${name}, ${st.moduleJeString} Module je String: ${b.text}` }));
+      return { ...r, wr: name, modul, moduleJeString: st.moduleJeString, anzahl: num(st.anzahl, 1) };
+    })
+  ).filter(Boolean);
+  for (const st of strings) befunde.push(...st.befunde);
+  const stringVerlust = Math.max(0, ...strings.map(st => st.verlust));
+
+  // DC-Leitungen: Strom und Spannung aus dem ersten passenden String, sonst aus dem ersten Modultyp
+  const m0 = n.modultypen[0] || {};
+  const dcLeitungen = n.dc
+    .map(k => {
+      const st = strings[num(k.string, 0)];
+      const modul = st?.modul || m0;
+      const strom = num(k.strom, num(modul.impp));
+      const spannung = num(k.spannung, num(modul.vmpp) && (st?.moduleJeString || num(k.moduleJeString)) ? modul.vmpp * (st?.moduleJeString || k.moduleJeString) : null);
+      return dcLeitung(k, strom, spannung);
+    })
+    .filter(Boolean);
+  const dcAnteil = dcLeitungen.length ? sum(dcLeitungen, l => l.energieAnteil) / dcLeitungen.length : 0;
+  for (const l of dcLeitungen)
+    if (l.verlustAnteil > a.dcVerlustGrenze)
+      befunde.push({ id: 'dcVerlust', schwere: 'hinweis', text: `${l.name}: DC-Verlust bei Volllast ${(l.verlustAnteil * 100).toFixed(1)} % (Planungswert höchstens ${a.dcVerlustGrenze * 100} %).` });
+  befunde.push(...kabelQualitaet(n));
+
+  // Angaben gegeneinander: Module laut Liste gegen angegebene Leistung
+  if (n.kwpModule && Math.abs(n.kwpModule / n.kwp - 1) > 0.03)
+    befunde.push({ id: 'angaben', schwere: 'befund', text: `Die verbauten Module ergeben ${n.kwpModule.toLocaleString('de-DE', { maximumFractionDigits: 1 })} kWp, angegeben sind ${n.kwp.toLocaleString('de-DE', { maximumFractionDigits: 1 })} kWp. Die Unterlagen passen nicht zur Anlage.` });
+  const kwAcListe = sum(n.wr, w => w.kwAC * w.anzahl);
+  if (n.ist?.wrLeistungAngegeben && kwAcListe && Math.abs(n.ist.wrLeistungAngegeben / kwAcListe - 1) > 0.03)
+    befunde.push({ id: 'angabenWr', schwere: 'befund', text: `Wechselrichter laut Liste ${kwAcListe} kW, angegeben ${n.ist.wrLeistungAngegeben} kW.` });
 
   const reihenVerlust = sum(flaechen, f => (f.reihen ? f.reihen.verlust * f.kwp : 0)) / n.kwp;
-  const gebaut = ideal * (1 - acAnteil) * (1 - kapp) * (1 - stringVerlust) * (1 - reihenVerlust);
-  return { flaechen, ideal, gebaut, verlust: 1 - gebaut / ideal, leitungen, acAnteil, acVolllast, spannungsfall, dcAc, kappung: kapp, strings, reihenVerlust, befunde };
+  const gebaut = ideal * (1 - acAnteil) * (1 - dcAnteil) * (1 - kapp) * (1 - stringVerlust) * (1 - reihenVerlust);
+  return { flaechen, ideal, gebaut, verlust: 1 - gebaut / ideal, leitungen, dcLeitungen, dcAnteil, acAnteil, acVolllast, spannungsfall, dcAc, kappung: kapp, strings, reihenVerlust, befunde };
 }
 
 // ---------------------------------------------------------------------------
@@ -199,9 +279,15 @@ export function planung(n) {
 
 /** Garantiekurve: Anteil der Anfangsleistung nach `alter` Jahren. */
 export function garantie(n) {
-  const g1 = num(n.module?.garantieJahr1, ANNAHMEN.garantieJahr1[n.typ]);
-  const g = num(n.module?.degradation, ANNAHMEN.degradation[n.typ]);
-  return n.alter < 1 ? 1 : g1 - g * (n.alter - 1);
+  // je Modultyp nach Leistung gewichtet; ohne Liste nach Technologie
+  const liste = n.modultypen.length ? n.modultypen : [{ typ: n.typ, anzahl: 1, wp: 1 }];
+  const gewicht = sum(liste, m => m.anzahl * m.wp) || 1;
+  const anteil = m => {
+    const g1 = num(m.garantieJahr1, ANNAHMEN.garantieJahr1[m.typ] ?? ANNAHMEN.garantieJahr1.mono);
+    const g = num(m.degradation, ANNAHMEN.degradation[m.typ] ?? ANNAHMEN.degradation.mono);
+    return n.alter < 1 ? 1 : g1 - g * (n.alter - 1);
+  };
+  return sum(liste, m => anteil(m) * (m.anzahl * m.wp || 1)) / (n.modultypen.length ? gewicht : 1);
 }
 
 /** Verschmutzungsrisiko aus der Umgebung: Quellen mit Abstand in Metern (aus OpenStreetMap oder Ortsbegehung). */
@@ -300,6 +386,8 @@ export function ursachen(n, p, z, s) {
   if (n.ist?.phasenUngleich) pkt.ac += 4;
   if (p.acVolllast > ANNAHMEN.acVerlustGrenze) pkt.ac += 2;
   if (p.verlust > 0.05) pkt.planung += 3 + Math.round(p.verlust * 20);
+  if (p.befunde.some(b => b.id === 'steckverbinder' || b.id === 'dcKabeltyp')) { pkt.string += 2; pkt.wechselrichter += 1; }
+  if (p.befunde.some(b => b.id === 'angaben')) pkt.planung += 3;
   if (verlauf === 'immer') pkt.planung += 2;
   pkt.verschmutzung += { niedrig: -1, mittel: 2, hoch: 4 }[s.stufe];
   return Object.entries(pkt)
@@ -357,14 +445,15 @@ export function wert(n, z) {
     kwp: n.kwp,
     baujahr: n.jahr,
     monat: n.monat,
-    art: n.art === 'frei' ? 'frei' : 'dach',
+    art: n.art,
     eegCt: n.eegCt,
     evAnteil: n.evAnteil,
     baukosten: n.baukosten,
     zustand: n.zustand,
     wrJahr: n.wrJahr,
     speicherKwh: n.speicherKwh,
-    annahmen: { stichjahr: n.stichjahr }
+    pachtJahr: n.pachtJahr,
+    annahmen: { stichjahr: n.stichjahr, ...(n.art === 'frei' ? ANNAHMEN.freiflaeche : {}) }
   };
   const istJahr = z.ist / n.wetterFaktor; // Normaljahr
   const sollJahr = z.sollHeute / n.wetterFaktor;

@@ -26,6 +26,7 @@ export function protokoll(r, meta = {}) {
     anlage: {
       bezeichnung: n.bezeichnung || null,
       ort: n.standort?.ort || null,
+      art: n.art === 'frei' ? 'Freifläche' : 'Dachanlage',
       kwp: n.kwp,
       kwAC: Math.round(n.kwAC * 10) / 10,
       inbetriebnahme: `${String(n.monat).padStart(2, '0')}/${n.jahr}`,
@@ -48,6 +49,14 @@ export function protokoll(r, meta = {}) {
         ['Alterung laut Modulgarantie', z.alterung],
         ['Planung und Aufbau', z.planung],
         ...(z.bekannt ? [['AC-Seite, mehr als die Leitung erklärt', z.ac], ['Nicht erklärt', z.rest]] : [])
+      ]
+    },
+    komponenten: {
+      module: n.modultypen.map(m => ({ name: [m.hersteller, m.modell || m.name].filter(Boolean).join(' ') || 'Modul', technologie: m.typ, wp: m.wp, anzahl: m.anzahl })),
+      wechselrichter: n.wr.map(w => ({ name: [w.hersteller, w.typ].filter(Boolean).join(' ') || 'Wechselrichter', kwAC: w.kwAC, anzahl: w.anzahl })),
+      kabel: [
+        ...p.dcLeitungen.map(l => ({ seite: 'DC', name: l.name, querschnitt: l.querschnitt, material: l.material, laenge: l.laenge, verlustAnteil: l.verlustAnteil })),
+        ...p.leitungen.map(l => ({ seite: 'AC', name: l.name, querschnitt: l.querschnitt, material: l.material, laenge: l.laenge, verlustAnteil: l.verlustAnteil }))
       ]
     },
     planung: { befunde: p.befunde, dcAc: p.dcAc, acVerlustVolllast: p.acVolllast, spannungsfall: p.spannungsfall, leitungen: p.leitungen.map(l => ({ name: l.name, querschnitt: l.querschnitt, material: l.material, laenge: l.laenge, verlustAnteil: l.verlustAnteil, spannungsfall: l.spannungsfall })) },
@@ -94,10 +103,16 @@ table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:1.2mm 2m
 <div class="stufe ${esc(pr.ergebnis.stufe)}"><strong>${esc(pr.ergebnis.satz)}</strong>${pr.ergebnis.performance != null ? ` Sie liefert ${pz(pr.ergebnis.performance)} dessen, was sie so wie gebaut heute liefern muss.` : ''}${pr.ergebnis.planung ? `<br>${esc(pr.ergebnis.planung)}` : ''}</div>
 <h2>Anlage</h2><table>
 ${zeile('Bezeichnung, Ort', [a.bezeichnung, a.ort].filter(Boolean).join(', ') || '–')}
+${zeile('Art', a.art)}
 ${zeile('Leistung', `${a.kwp.toLocaleString('de-DE')} kWp, Wechselrichter ${a.kwAC.toLocaleString('de-DE')} kW`)}
 ${zeile('Inbetriebnahme, Alter', `${a.inbetriebnahme}, ${a.alter} Jahre`)}
 ${a.flaechen.map((f, i) => zeile(f.name || `Fläche ${i + 1}`, `${f.kwp.toLocaleString('de-DE')} kWp, Azimut ${f.azimut}°, Neigung ${f.neigung}°${f.aufgestaendert ? ', aufgeständert' : ''}`)).join('')}
 </table>
+${pr.komponenten.module.length || pr.komponenten.wechselrichter.length || pr.komponenten.kabel.length ? `<h2>Verbaute Komponenten</h2><table>
+${pr.komponenten.module.map(m => zeile(`Module: ${m.name}`, `${m.anzahl} × ${m.wp} Wp, ${m.technologie}`)).join('')}
+${pr.komponenten.wechselrichter.map(w => zeile(`Wechselrichter: ${w.name}`, `${w.anzahl} × ${w.kwAC.toLocaleString('de-DE')} kW`)).join('')}
+${pr.komponenten.kabel.map(k => zeile(`${k.seite}-Kabel: ${k.name}`, `${k.querschnitt} mm² ${k.material === 'al' ? 'Aluminium' : 'Kupfer'}, ${k.laenge} m, Verlust bei Volllast ${pz(k.verlustAnteil, 1)}`)).join('')}
+</table>` : ''}
 <h2>Ertrag im Jahr</h2><table>
 ${zeile('Gut geplant, heute möglich', kwh(e.ideal))}
 ${zeile('So wie gebaut, heute Soll', kwh(e.sollHeute))}
@@ -105,7 +120,7 @@ ${zeile(`Ist (${e.quelle === 'zaehler' ? 'Zähler' : e.quelle === 'wechselrichte
 ${e.wetterFaktor !== 1 ? zeile('Wetter im Zeitraum gegenüber Mittel', pz(e.wetterFaktor)) : ''}
 ${e.zerlegung.map(([k, x]) => zeile(`davon fehlt: ${k}`, kwh(x))).join('')}
 </table>
-<h2>Planung und Aufbau</h2>${liste(pr.planung.befunde.map(b => b.text))}
+<h2>Planung, Aufbau und Kabel</h2>${liste(pr.planung.befunde.map(b => b.text))}
 <p class="klein">DC/AC-Verhältnis ${pr.planung.dcAc.toLocaleString('de-DE', { maximumFractionDigits: 2 })}${pr.planung.leitungen.length ? `, AC-Verlust bei Volllast ${pz(pr.planung.acVerlustVolllast, 1)}, Spannungsfall ${pz(pr.planung.spannungsfall, 1)}` : ''}.</p>
 <h2>Umgebung und Verschmutzung</h2><p>Risiko ${esc(pr.verschmutzung.stufe)}${pr.verschmutzung.quellen.length ? `: ${esc(pr.verschmutzung.quellen.map(q => `${q.titel} (${q.abstand} m)`).join(', '))}` : ''}.</p>
 <h2>Wahrscheinliche Ursachen</h2>${pr.ursachen.length ? `<ol>${pr.ursachen.map(u => `<li><strong>${esc(u.titel)}:</strong> ${esc(u.text)}</li>`).join('')}</ol>` : '<p>Ohne Ist-Werte keine Einschätzung.</p>'}

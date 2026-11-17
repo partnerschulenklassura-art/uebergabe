@@ -111,6 +111,39 @@ assert.equal(leer.ursachen.length, 0);
 const wetter = leistungscheck({ kwp: 10, inbetriebnahme: { jahr: 2016 }, ist: { zaehlerKwh: 8000 }, wetter: { zeitraumFaktor: 0.88 }, stichjahr: 2026 });
 assert.equal(wetter.zerlegung.stufe, 'gut');
 
+// Fall 5: zwei Modultypen, Strings je Wechselrichter, DC-Kabel ohne Solarzulassung, gemischte Steckverbinder,
+// Unterlagen nennen mehr Leistung als verbaut ist (Muster: Anlage mit falschen Angaben verkauft)
+const komp = leistungscheck({
+  kwp: 60,
+  art: 'frei',
+  inbetriebnahme: { jahr: 2014, monat: 8 },
+  module: [
+    { hersteller: 'A', modell: 'P250', typ: 'poly', wp: 250, anzahl: 120, uoc: 37.6, vmpp: 30.4, impp: 8.2, tkUoc: -0.31 },
+    { hersteller: 'B', modell: 'M300', typ: 'mono', wp: 300, anzahl: 40, uoc: 39.8, vmpp: 32.5, impp: 9.2, tkUoc: -0.29 }
+  ],
+  felder: [{ kwp: 42, azimut: 0, neigung: 25, aufgestaendert: true, modulTiefe: 1.65, reihenabstand: 4.5 }],
+  wechselrichter: [{ hersteller: 'X', typ: 'TL 20', kwAC: 20, anzahl: 2, umaxDC: 1000, mppMin: 350, mppMax: 800, strings: [{ modul: 0, moduleJeString: 20, anzahl: 6 }, { modul: 1, moduleJeString: 20, anzahl: 2 }] }],
+  dc: [{ name: 'String 1', querschnitt: 2.5, laenge: 80, kabeltyp: 'NYM' }],
+  steckverbinder: { mischung: true },
+  ac: [{ name: 'Wechselrichter bis Trafostation', querschnitt: 95, material: 'al', laenge: 120 }],
+  ist: { zaehlerKwh: 33000 },
+  stichjahr: 2026
+});
+const kids = komp.planung.befunde.map(b => b.id);
+for (const id of ['angaben', 'dcKabeltyp', 'dcQuerschnitt', 'steckverbinder', 'alKlemmen']) assert.ok(kids.includes(id), `Befund ${id} fehlt: ${kids}`);
+near(komp.eingabe.kwpModule, 42, 0.01);
+assert.equal(komp.planung.strings.length, 2);
+assert.ok(komp.planung.dcLeitungen[0].verlustAnteil > 0.01, 'dünnes DC-Kabel verliert');
+const g = komp.zerlegung.garantie;
+assert.ok(g > 0.9 && g < 0.94, `Garantie gewichtet ${g}`);
+// Freifläche und Dach unterscheiden sich in Bauwert und Vergütung
+const alsDach = leistungscheck({ ...komp.eingabe, inbetriebnahme: { jahr: 2011, monat: 6 }, art: 'dach', module: komp.eingabe.modultypen, kwp: 42 });
+const alsFrei = leistungscheck({ ...komp.eingabe, inbetriebnahme: { jahr: 2011, monat: 6 }, art: 'frei', module: komp.eingabe.modultypen, kwp: 42 });
+assert.ok(alsFrei.wert.restwert < alsDach.wert.restwert, 'Freifläche: geringerer Bauwert je kWp');
+assert.notEqual(alsFrei.wert.eegCt, alsDach.wert.eegCt, 'Freifläche: andere Vergütung');
+const prK = alsHtml(protokoll(komp));
+assert.ok(prK.includes('Verbaute Komponenten') && prK.includes('Freifläche') && prK.includes('Steckverbinder'));
+
 // Protokoll mit Prüfsumme
 const pr = await mitPruefsumme(protokoll(ac, { nummer: 'LC-2026-0001', erstellt: '2026-11-17' }));
 assert.equal(pr.pruefsumme.length, 64);
