@@ -67,7 +67,7 @@ cd "$PVM"
 node -e 'const f=require("./data/firmen.json");const l=Array.isArray(f)?f:(f.eintraege||Object.values(f));l.forEach((x,i)=>console.log("   ["+(i+1)+"] "+x.name+"  ("+x.id+")"))'
 read -rp "   Nummer deines Betriebs aus der Liste: " NR
 FIRMA=$(node -e 'const f=require("./data/firmen.json");const l=Array.isArray(f)?f:(f.eintraege||Object.values(f));const x=l[Number(process.argv[1])-1];if(!x)process.exit(1);process.stdout.write(String(x.id))' "$NR") || { echo "   STOPP: ungültige Nummer"; exit 1; }
-SCHLUESSEL=$(node tools/schluessel-ausstellen.js --firma "$FIRMA" | grep -oE 'pvm_lc_[A-Za-z0-9_-]+' | head -1)
+SCHLUESSEL=$(node tools/schluessel-ausstellen.js --firma "$FIRMA" | grep -oE '^pvm_lc_[0-9a-f]{8}_[0-9a-f]{32}$' | head -1) || true
 [ -n "$SCHLUESSEL" ] || { echo "   STOPP: Schlüssel nicht erhalten"; exit 1; }
 setze "$API/.env" PVM_LC_SCHLUESSEL "$SCHLUESSEL"
 unset SCHLUESSEL
@@ -77,7 +77,7 @@ echo "   Schlüssel ausgestellt und in ppp-api eingetragen (nicht angezeigt)"
 echo "== 5. ppp-api neu laden"
 pm2 reload ppp-api --update-env >/dev/null
 for i in $(seq 1 10); do curl -fsS --max-time 5 http://127.0.0.1:3140/api/leistungscheck/gesund >/dev/null 2>&1 && break; sleep 1; done
-echo "   ppp-api läuft"
+curl -fsS --max-time 5 http://127.0.0.1:3140/api/leistungscheck/gesund >/dev/null && echo "   ppp-api läuft" || { echo "   STOPP: ppp-api antwortet nach Reload nicht. Rückweg: .env aus $SICHER zurück, pm2 reload ppp-api --update-env"; exit 1; }
 
 echo "== 6. Website ausliefern"
 rsync -a --delete "$HIER/website/" "$WEB/"
@@ -87,7 +87,7 @@ echo "   ausgeliefert"
 echo "== 7. Testauftrag"
 NUM="LC-TEST-$(date +%Y%m%d%H%M)"
 ANTWORT=$(curl -s --max-time 30 -H 'content-type: application/json' -X POST "$DOMAIN/api/leistungscheck/pruefauftrag" -d @- <<JSON
-{"fremdnummer":"$NUM","website":"","eigentuemer":{"name":"TEST Leistungscheck (bitte löschen)","telefon":"000","email":"info@photovoltaikperformancepro.com"},
+{"fremdnummer":"$NUM","website":"","eigentuemer":{"name":"TEST Leistungscheck (bitte löschen)","telefon":"0000000000","email":"info@photovoltaikperformancepro.com"},
  "anlage":{"adresse":"Teststraße 1, 08412 Werdau","lat":50.73,"lon":12.35,"art":"dach","kwp":10,"inbetriebnahme_jahr":2015,"teilflaechen":[{"azimut":0,"neigung":30,"kwp":10}]},
  "einschaetzung":{"stufe":"auffaellig","performance":0.85,"soll_kwh":11142,"ist_kwh":9500,"zerlegung":{"alterung":839,"planung":0,"ac":0,"rest":1642},"ursachen":["Verschmutzung"],"pruefpunkte":[],"protokoll_pruefsumme":"$(printf %s "$NUM" | sha256sum | cut -d' ' -f1)"},
  "wunschtermin":"Test","einwilligung":{"datenschutz":true,"zeitpunkt":"$(date -u +%FT%TZ)","fassung":"ppp-datenschutz-2026-11-18"}}
