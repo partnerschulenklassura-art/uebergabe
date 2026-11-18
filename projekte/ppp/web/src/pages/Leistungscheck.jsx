@@ -4,6 +4,7 @@ import { leistungscheck } from '../lib/leistungscheck.js';
 import { protokoll, mitPruefsumme, alsHtml } from '../lib/protokoll.js';
 import { ermittle, AUSRICHTUNG } from '../lib/leistungscheck-dienst.js';
 import { site } from '../site.config.js';
+import { url } from '../lib/url.js';
 
 const SCHRITTE = [
   ['ort', 'Standort'],
@@ -288,13 +289,14 @@ export default function Leistungscheck() {
         </div>
       </section>
 
-      {erg && <Ergebnis erg={erg} onProtokoll={protokollOeffnen} onPruefung={pruefungAnfragen} />}
+      {erg && <Ergebnis erg={erg} adresse={f.adresse} onProtokoll={protokollOeffnen} onMail={pruefungAnfragen} />}
     </>
   );
 }
 
-function Ergebnis({ erg, onProtokoll, onPruefung }) {
+function Ergebnis({ erg, adresse, onProtokoll, onMail }) {
   const { r, pr, luecken } = erg;
+  const [anfrage, setAnfrage] = useState(false);
   const z = r.zerlegung;
   const st = STUFE[z.stufe] || { titel: 'Soll berechnet', farbe: '#8fb3d1' };
   const balken = z.bekannt
@@ -404,17 +406,155 @@ function Ergebnis({ erg, onProtokoll, onPruefung }) {
             <button type="button" className="btn btn-sun" onClick={onProtokoll}>
               Protokoll öffnen und drucken
             </button>
-            {r.vorOrt.noetig && (
-              <button type="button" className="btn btn-line-light" onClick={onPruefung}>
-                Prüfung vor Ort anfragen
-              </button>
-            )}
+            <button type="button" className={r.vorOrt.noetig ? 'btn btn-line-light' : 'btn btn-line-light opacity-80'} aria-expanded={anfrage} onClick={() => setAnfrage(a => !a)}>
+              Prüfung vor Ort anfragen
+            </button>
           </div>
+          {anfrage && <Pruefanfrage erg={erg} adresse={adresse} onMail={onMail} />}
           <p className="mb-0 mt-4 text-[0.85rem] text-papier/55">
             Protokoll {pr.nummer}, Prüfsumme {pr.pruefsumme.slice(0, 16)}…. Eine Rechnung, keine Messung. Gemessen wird vor Ort mit PV-Monteur.
           </p>
         </div>
       </div>
     </section>
+  );
+}
+
+/** Prüfauftrag direkt an PV-Monteur (über ppp-api). Ist der Dienst nicht bereit, bleibt die E-Mail. */
+function Pruefanfrage({ erg, adresse, onMail }) {
+  const { r, pr } = erg;
+  const [a, setA] = useState({ name: '', telefon: '', email: '', adresse, wunschtermin: '', einwilligung: false, website: '' });
+  const [zustand, setZustand] = useState({ s: 'offen' });
+  const set = k => ev => setA(x => ({ ...x, [k]: ev.target.type === 'checkbox' ? ev.target.checked : ev.target.value }));
+
+  async function senden(ev) {
+    ev.preventDefault();
+    setZustand({ s: 'sendet' });
+    const z = r.zerlegung;
+    const rumpf = {
+      fremdnummer: pr.nummer,
+      website: a.website,
+      eigentuemer: { name: a.name.trim(), telefon: a.telefon.trim(), email: a.email.trim() },
+      anlage: {
+        adresse: a.adresse.trim(),
+        lat: r.eingabe.standort?.breite ?? null,
+        lon: r.eingabe.standort?.laenge ?? null,
+        art: r.eingabe.art,
+        kwp: r.eingabe.kwp,
+        inbetriebnahme_jahr: r.eingabe.jahr,
+        teilflaechen: r.eingabe.felder.map(f => ({ azimut: f.azimut, neigung: f.neigung, kwp: Math.round(f.kwp * 100) / 100 }))
+      },
+      einschaetzung: {
+        stufe: z.stufe ?? null,
+        performance: z.performance ?? null,
+        soll_kwh: Math.round(z.sollHeute),
+        ist_kwh: z.ist != null ? Math.round(z.ist) : null,
+        zerlegung: { alterung: Math.round(z.alterung || 0), planung: Math.round(z.planung || 0), ac: Math.round(z.ac || 0), rest: Math.round(z.rest || 0) },
+        ursachen: pr.ursachen.map(u => u.titel),
+        pruefpunkte: r.vorOrt.pruefpunkte,
+        protokoll_pruefsumme: pr.pruefsumme
+      },
+      wunschtermin: a.wunschtermin.trim(),
+      einwilligung: { datenschutz: a.einwilligung, zeitpunkt: new Date().toISOString(), fassung: 'ppp-datenschutz-2026-11-18' }
+    };
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 20000);
+      const res = await fetch('/api/leistungscheck/pruefauftrag', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(rumpf), signal: ctrl.signal });
+      clearTimeout(t);
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) return setZustand({ s: 'fertig', d });
+      if (res.status === 503 || res.status === 404) return setZustand({ s: 'mail' });
+      setZustand({ s: 'fehler', text: d.fehler || `Fehler ${res.status}` });
+    } catch {
+      setZustand({ s: 'mail' });
+    }
+  }
+
+  if (zustand.s === 'fertig') {
+    const d = zustand.d;
+    return (
+      <div className="mt-6 rounded-2xl border border-[#5fb37f]/50 bg-[#5fb37f]/10 p-5 text-papier" role="status">
+        <p className="m-0 font-display text-[1.4rem] font-semibold">Ihr Prüfauftrag ist angelegt: {d.auftragsnummer}</p>
+        <p className="mb-0 mt-2 text-papier/80">Wir melden uns mit Angebot und Terminvorschlag. Damit die Prüfung reibungslos läuft, halten Sie bitte bereit:</p>
+        <ul className="mb-0 mt-2 grid gap-1 pl-5 text-papier/85">
+          {(d.eigentuemer_liefert || []).map(x => (
+            <li key={x}>{x}</li>
+          ))}
+        </ul>
+        {d.statuslink && (
+          <p className="mb-0 mt-3">
+            Den Stand sehen Sie jederzeit hier:{' '}
+            <a className="text-sonne underline" href={d.statuslink}>
+              Status Ihres Prüfauftrags
+            </a>
+            . Speichern Sie sich den Link, er ist Ihr Zugang.
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  if (zustand.s === 'mail') {
+    return (
+      <div className="mt-6 rounded-2xl border border-white/15 p-5 text-papier/85">
+        <p className="m-0">Die direkte Anfrage ist gerade nicht möglich. Schicken Sie uns die Anfrage per E-Mail, das Ergebnis ist schon eingetragen.</p>
+        <button type="button" className="btn btn-sun mt-4" onClick={onMail}>
+          Anfrage per E-Mail
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="wl mt-6">
+    <form className="form grid gap-4" style={{ padding: 0 }} onSubmit={senden}>
+      <p className="m-0 text-papier/80">
+        Wir prüfen selbst, nach Angebot, Anfahrt 0,50 € je Kilometer. Ihr Ergebnis aus dem Leistungscheck geht mit, damit wir gezielt messen.
+      </p>
+      <div className="grid2">
+        <label>
+          <span className="lbl">Name</span>
+          <input required autoComplete="name" value={a.name} onChange={set('name')} />
+        </label>
+        <label>
+          <span className="lbl">Telefon</span>
+          <input required type="tel" autoComplete="tel" value={a.telefon} onChange={set('telefon')} />
+        </label>
+        <label>
+          <span className="lbl">E-Mail</span>
+          <input required type="email" autoComplete="email" value={a.email} onChange={set('email')} />
+        </label>
+        <label>
+          <span className="lbl">
+            Wunschtermin <span className="opt">(optional)</span>
+          </span>
+          <input placeholder="z. B. ab 1. Dezember, vormittags" value={a.wunschtermin} onChange={set('wunschtermin')} />
+        </label>
+      </div>
+      <label>
+        <span className="lbl">Adresse der Anlage mit Straße</span>
+        <input required autoComplete="street-address" value={a.adresse} onChange={set('adresse')} />
+      </label>
+      <label className="hidden" aria-hidden="true">
+        Website <input tabIndex={-1} autoComplete="off" value={a.website} onChange={set('website')} />
+      </label>
+      <label className="check">
+        <input type="checkbox" required checked={a.einwilligung} onChange={set('einwilligung')} />
+        <span>
+          Ich bin einverstanden, dass PV Performance Pro meine Angaben und das Ergebnis des Leistungschecks speichert, um mir ein Angebot zu machen und die Prüfung zu planen.{' '}
+          <a href={url('/datenschutz.html')}>Datenschutz</a>
+        </span>
+      </label>
+      <button className="btn btn-sun justify-self-start" disabled={zustand.s === 'sendet'}>
+        {zustand.s === 'sendet' ? 'Wird angelegt …' : 'Prüfauftrag anlegen'}
+      </button>
+      {zustand.s === 'fehler' && (
+        <p className="form-error m-0" role="alert">
+          {zustand.text}
+        </p>
+      )}
+    </form>
+    </div>
   );
 }

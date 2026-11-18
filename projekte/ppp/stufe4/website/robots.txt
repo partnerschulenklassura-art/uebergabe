@@ -1,0 +1,9 @@
+# Alle Suchmaschinen und KI-Crawler dürfen die öffentlichen Seiten lesen.
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /bestaetigt.html
+Disallow: /abgemeldet.html
+Disallow: /link-ungueltig.html
+
+Sitemap: https://www.photovoltaikperformancepro.com/sitemap.xml
