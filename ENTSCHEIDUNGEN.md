@@ -14,3 +14,6 @@
 - Der Dienst `/var/www/eid/ppp-api` wird erst mit der Seite „Leistungscheck“ gestartet.
 - Ortssuche: Die Seite verlangt eine fünfstellige PLZ; `addressdetails=1` und „Ort, Kreis“ passen; eine PM2-Instanz für ppp-api (17.11.2026).
 - Go-live-Skript: maßgeblich ist `projekte/ppp/stufe3/leistungscheck-online.sh` (Schutzschritte aus der Prüfung übernommen); die Kopie in `/var/www/eid/ppp-stufe3/` ist überholt.
+
+## 2026-11-18 – Freigabe für live
+- `ziel: live` in einem Auftrag von Claude Desktop gilt als Freigabe durch Andre für genau diesen Auftrag. Nginx, Cron, .env und neue Dienste bleiben weiter bei Andre.
