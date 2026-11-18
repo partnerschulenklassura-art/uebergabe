@@ -28,3 +28,28 @@ const r = leistungscheck(e);
 const ids = r.planung.befunde.map(b => b.id);
 for (const id of ['dcKabeltyp', 'dcQuerschnitt', 'steckverbinder']) assert.ok(ids.includes(id), `${id} fehlt: ${ids}`);
 console.log('Dienst-Tests bestanden');
+
+// Bauteile für den Prüfauftrag (Vertrag Fassung 2)
+{
+  const { komponentenFuerAuftrag } = await import('./leistungscheck-dienst.js');
+  assert.equal(komponentenFuerAuftrag(null), null);
+  const k = komponentenFuerAuftrag({
+    module: [{ hersteller: 'X'.repeat(100), modell: 'M', typ: 'duennschicht', wp: '250', anzahl: '120', uoc: '37,8', tkUoc: '-0,31' }],
+    wechselrichter: [{ kwAC: '20', anzahl: '1', mppMin: '900', mppMax: '800', modul: '0', moduleJeString: '20', stringAnzahl: '3' }],
+    kabel: [{ seite: 'dc', querschnitt: '2,5', laenge: '30', kabeltyp: 'NYM' }, { seite: 'ac', querschnitt: '240', laenge: '80', material: 'al', kabeltyp: 'NAYY' }],
+    steckverbinderMischung: true
+  });
+  assert.equal(k.module[0].hersteller.length, 80);
+  assert.equal(k.module[0].typ, 'duenn');
+  assert.equal(k.module[0].uoc, 37.8);
+  assert.equal(k.module[0].tk_uoc, -0.31);
+  assert.equal(k.wechselrichter[0].mpp_min, undefined, 'mpp_min >= mpp_max wird verworfen');
+  assert.deepEqual(k.wechselrichter[0].strings, [{ modul_index: 0, module_je_string: 20, anzahl: 3 }]);
+  assert.deepEqual(k.kabel.map(x => [x.seite, x.kabeltyp, x.leiter]), [['dc', 'nym', 'cu'], ['ac', 'nyy', 'al']]);
+  assert.equal(k.steckverbinder_gemischt, true);
+  assert.ok(!('tkUoc' in k.module[0]) && !('kwAC' in k.wechselrichter[0]), 'nur Vertragsnamen');
+  const ohneModul = komponentenFuerAuftrag({ wechselrichter: [{ kwAC: '10', anzahl: '1,5', modul: '0', moduleJeString: '18' }] });
+  assert.deepEqual(ohneModul.wechselrichter[0].strings, [], 'String ohne passendes Modul fällt weg');
+  assert.equal(ohneModul.wechselrichter[0].anzahl, undefined, 'Anzahl nur ganzzahlig');
+  console.log('Bauteile für Prüfauftrag bestanden');
+}

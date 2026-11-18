@@ -181,3 +181,39 @@ export async function ermittle(formular, melde = () => {}) {
 
   return { eingabe: e, luecken };
 }
+
+/**
+ * Bauteile für den Prüfauftrag an PV-Monteur (Vertrag Fassung 2, Abschnitt 5).
+ * Werte außerhalb der Grenzen werden weggelassen statt abgelehnt; Texte auf 80 Zeichen gekürzt.
+ * Gibt null zurück, wenn nichts angegeben ist.
+ */
+export function komponentenFuerAuftrag(k) {
+  const e = komponentenAusFormular(k);
+  const txt = t => (t ? String(t).trim().slice(0, 80) || undefined : undefined);
+  const ganz = v => (v != null && Number.isInteger(v) ? v : undefined);
+  const im = (v, min, max) => (v != null && Number.isFinite(v) && v >= min && v <= max ? v : undefined);
+  const TYP = { mono: 'mono', poly: 'poly', duennschicht: 'duenn' };
+  const KABEL = { solarkabel: 'solar', NYY: 'nyy', NYM: 'nym', NAYY: 'nyy', andere: 'sonstig' };
+  const module = (e.module || []).slice(0, 20).map(m => ({
+    hersteller: txt(m.hersteller), modell: txt(m.modell), typ: TYP[m.typ] || 'unbekannt',
+    wp: im(m.wp, 1, 1000), anzahl: ganz(im(m.anzahl, 1, 100000)),
+    uoc: im(m.uoc, 1, 200), vmpp: im(m.vmpp, 1, 200), impp: im(m.impp, 0.1, 30), tk_uoc: im(m.tkUoc, -1, 0)
+  }));
+  const wechselrichter = (e.wechselrichter || []).slice(0, 20).map(w => {
+    let mpp_min = im(w.mppMin, 0, 2000), mpp_max = im(w.mppMax, 0, 2000);
+    if (mpp_min != null && mpp_max != null && mpp_min >= mpp_max) mpp_min = mpp_max = undefined;
+    return {
+      hersteller: txt(w.hersteller), modell: txt(w.typ), kw_ac: im(w.kwAC, 0.1, 10000), anzahl: ganz(im(w.anzahl, 1, 100000)),
+      umax_dc: im(w.umaxDC, 50, 2000), mpp_min, mpp_max,
+      strings: (w.strings || []).filter(s => (s.modul | 0) >= 0 && (s.modul | 0) < module.length).slice(0, 20).map(s => ({ modul_index: s.modul | 0, module_je_string: ganz(im(s.moduleJeString, 1, 100)), anzahl: ganz(im(s.anzahl, 1, 100000)) }))
+    };
+  });
+  const kab = seite => x => ({
+    seite, bezeichnung: txt(x.name), querschnitt_mm2: im(x.querschnitt, 0.5, 1000), laenge_m: im(x.laenge, 0.1, 5000),
+    leiter: x.material === 'al' ? 'al' : 'cu', kabeltyp: KABEL[x.kabeltyp] || 'unbekannt'
+  });
+  const kabel = [...(e.dc || []).map(kab('dc')), ...(e.ac || []).map(kab('ac'))].slice(0, 20);
+  const gemischt = !!e.steckverbinder?.mischung;
+  if (!module.length && !wechselrichter.length && !kabel.length && !gemischt) return null;
+  return JSON.parse(JSON.stringify({ herkunft: 'eigentuemer', module, wechselrichter, kabel, steckverbinder_gemischt: gemischt }));
+}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import PageHero from '../sections/PageHero.jsx';
 import { leistungscheck } from '../lib/leistungscheck.js';
 import { protokoll, mitPruefsumme, alsHtml } from '../lib/protokoll.js';
-import { ermittle, AUSRICHTUNG } from '../lib/leistungscheck-dienst.js';
+import { ermittle, AUSRICHTUNG, komponentenFuerAuftrag } from '../lib/leistungscheck-dienst.js';
 import { site } from '../site.config.js';
 import { url } from '../lib/url.js';
 import Komponentenerfassung, { komponentenLeer } from '../sections/Komponentenerfassung.jsx';
@@ -68,7 +68,7 @@ export default function Leistungscheck() {
       const nummer = `LC-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
       const pr = await mitPruefsumme(protokoll(r, { nummer }));
       melde('rechnen', 'fertig', 'Protokoll erstellt');
-      setErg({ r, pr, luecken });
+      setErg({ r, pr, luecken, bauteile: f.komponenten ? komponentenFuerAuftrag(f.komponenten) : null });
       setTimeout(() => document.getElementById('ergebnis')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     } catch (err) {
       setFehler(`Die Rechnung ist fehlgeschlagen: ${err.message}. Bitte Angaben prüfen oder später erneut versuchen.`);
@@ -474,6 +474,7 @@ function Pruefanfrage({ erg, adresse, onMail }) {
         pruefpunkte: r.vorOrt.pruefpunkte.slice(0, 20).map(p => ({ ursache: kurz(p.ursache, 80), pruefung: kurz(p.pruefung, 500) })),
         protokoll_pruefsumme: pr.pruefsumme
       },
+      ...(erg.bauteile ? { komponenten: erg.bauteile } : {}),
       wunschtermin: kurz(a.wunschtermin.trim(), 300),
       einwilligung: { datenschutz: a.einwilligung, zeitpunkt: new Date().toISOString(), fassung: 'ppp-datenschutz-2026-11-18' }
     };
