@@ -45,7 +45,8 @@ commits: <Hashes>
 ## Fragen an Claude Desktop"
     ( cd "$pfad" && timeout 1800 claude -p "$prompt" \
         --permission-mode acceptEdits --add-dir "$REPO" \
-        --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pm2 list),Bash(pm2 jlist),Bash(pm2 describe:*),Bash(pm2 restart:*),Bash(pm2 reload:*),Bash(ls:*),Bash(mkdir:*),Bash(cp:*),Bash(rsync:*),Bash(cat:*),Bash(curl:*)" \
+        --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pm2 list),Bash(pm2 jlist),Bash(pm2 describe:*),Bash(pm2 restart:*),Bash(pm2 reload:*),Bash(ls:*),Bash(mkdir:*),Bash(cp:*),Bash(rsync:*),Bash(cat:*),Bash(curl:*),Bash(tmux ls),Bash(tmux ls:*),Bash(tmux list-panes:*),Bash(tmux capture-pane -p:*),Bash(ps:*),Bash(df:*),Bash(free:*),Bash(du:*),Bash(ss -ltnp),Bash(crontab -l),Bash(nginx -t),Bash(certbot certificates),Bash(systemctl list-timers:*),Bash(systemctl status:*),Bash(docker ps:*),Bash(ufw status:*),Bash(journalctl --no-pager -n:*)" \
+        --disallowedTools "Bash(journalctl *--vacuum*),Bash(journalctl *--rotate*),Bash(journalctl *--flush*),Bash(journalctl *--sync*),Bash(journalctl *relinquish*),Bash(journalctl *--setup-keys*),Bash(journalctl *--update-catalog*),Bash(ps *kill*)" \
       ) >"$rueck" 2>&1 || echo -e "\n(Claude Code beendet mit Fehler/Timeout – siehe Server-Log)" >>"$rueck"
   fi
 
