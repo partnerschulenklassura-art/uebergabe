@@ -99,7 +99,7 @@ Im Rumpf von `POST …/pruefauftraege` (und in ppp-api `POST /api/leistungscheck
   "steckverbinder_gemischt": true
 }
 ```
-Grenzen: je Liste höchstens 20 Einträge, `strings` höchstens 20 je Gerät, Texte höchstens 80 Zeichen (bereinigt wie die übrigen Texte), Zahlen: wp 1–1000, anzahl 1–100 000, uoc/vmpp 1–200, impp 0,1–30, tk_uoc −1…0, kw_ac 0,1–10 000, umax_dc 50–2000, mpp 0–2000 (mpp_min < mpp_max), module_je_string 1–100, querschnitt_mm2 0,5–1000, laenge_m 0,1–5000. Alle Zahlenfelder optional. Unbekannte Schlüssel → 400 mit `feld`.
+Grenzen: je Liste höchstens 20 Einträge, `strings` höchstens 20 je Gerät, Texte höchstens 80 Zeichen (bereinigt wie die übrigen Texte), Zahlen: wp 1–1000, anzahl 1–100 000, uoc/vmpp 1–200, impp 0,1–30, tk_uoc −1…0, kw_ac 0,1–10 000, umax_dc 50–2000, mpp 0–2000 (mpp_min < mpp_max), module_je_string 1–100, querschnitt_mm2 0,5–1000, laenge_m 0,1–5000. Alle Zahlenfelder optional. `anzahl`, `module_je_string` und `modul_index` sind ganze Zahlen; `modul_index` muss auf einen Eintrag in `module` zeigen. `herkunft` ist vorerst nur `eigentuemer`. Unbekannte Schlüssel → 400 mit `feld`. ppp-api und PV-Monteur prüfen identisch.
 
 **Regel R1 gilt weiter:** PV-Monteur legt den Block **nur** als `komponenten_vorschlag` am Auftrag ab, mit `herkunft: 'leistungscheck-eigentuemer'`, Zeitpunkt und `ungeprueft: true`. Er geht **nicht** automatisch in Anlagen-Stammdaten, Stringpläne, Messwerte, Grenzwerte oder Befunde. In der Auftragsansicht erscheint er als „Angaben des Eigentümers (ungeprüft)“; übernehmen kann ihn nur ein Mensch (spätere Ausbaustufe, nicht Teil dieser Fassung).
 
