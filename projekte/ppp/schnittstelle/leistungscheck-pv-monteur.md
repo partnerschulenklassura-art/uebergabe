@@ -76,4 +76,10 @@ Warteschlange, bis zu 5 Wiederholungen, keine Weiterleitungen, Toleranz 5 Minute
 - `POST /api/leistungscheck/pruefauftrag` – Rumpf wie oben ohne Schlüssel, plus Honeypot-Feld `website` (muss leer sein). Prüft Pflichtfelder, Einwilligung, Größe, 5 Anfragen pro Stunde je IP. Leitet an PV-Monteur weiter. Antwort `{ auftragsnummer, fremdnummer, eigentuemer_liefert, statuslink }`, `statuslink` = `/leistungscheck/status/?n=<fremdnummer>&t=<token>`.
 - `GET /api/leistungscheck/pruefauftrag/:fremdnummer?t=<token>` – fragt PV-Monteur und gibt Status, Termin, Befunde und Urteile zurück.
 - `POST /api/leistungscheck/pvm-hinweis` – prüft die Signatur, merkt sich den letzten Status.
-- ppp-api speichert je Auftrag nur `fremdnummer`, SHA-256 des Tokens, letzten Status und Zeitpunkte (`data/pruefauftraege.json`). **Keine Namen, keine Kontaktdaten, keine Adresse** – die liegen nur in PV-Monteur.
+- ppp-api speichert je Auftrag nur `fremdnummer`, SHA-256 des Tokens (bis 5), SHA-256 der Protokoll-Prüfsumme (zur Unterscheidung echter Wiederholung von erratener Nummer; gleiche Nummer + andere Prüfsumme → 409), letzten Status und Zeitpunkte (`data/pruefauftraege.json`). **Keine Namen, keine Kontaktdaten, keine Adresse** – die liegen nur in PV-Monteur.
+
+## Ergänzungen 18.11.2026
+- Honeypot ausgefüllt → 400 mit klarer Meldung (keine Schein-Bestätigung).
+- Website weicht bei 404, 409 und 503 auf den E-Mail-Weg aus.
+- Ein Fehler beim Mailversand an die Leitung darf das Anlegen des Prüfauftrags nicht verhindern (Auftrag anlegen, Mail in die Warteschlange bzw. Fehler protokollieren, Antwort 201).
+- Keine eigene Vorschau-Instanz; getestet wird mit Tests und nach dem Livegang mit einem Testauftrag LC-TEST-….

@@ -464,7 +464,7 @@ function Pruefanfrage({ erg, adresse, onMail }) {
       clearTimeout(t);
       const d = await res.json().catch(() => ({}));
       if (res.ok) return setZustand({ s: 'fertig', d });
-      if (res.status === 503 || res.status === 404) return setZustand({ s: 'mail' });
+      if (res.status === 503 || res.status === 404 || res.status === 409) return setZustand({ s: 'mail' });
       setZustand({ s: 'fehler', text: d.fehler || `Fehler ${res.status}` });
     } catch {
       setZustand({ s: 'mail' });
