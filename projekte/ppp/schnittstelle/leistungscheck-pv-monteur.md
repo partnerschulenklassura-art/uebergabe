@@ -83,3 +83,24 @@ Warteschlange, bis zu 5 Wiederholungen, keine Weiterleitungen, Toleranz 5 Minute
 - Website weicht bei 404, 409 und 503 auf den E-Mail-Weg aus.
 - Ein Fehler beim Mailversand an die Leitung darf das Anlegen des Prüfauftrags nicht verhindern (Auftrag anlegen, Mail in die Warteschlange bzw. Fehler protokollieren, Antwort 201).
 - Keine eigene Vorschau-Instanz; getestet wird mit Tests und nach dem Livegang mit einem Testauftrag LC-TEST-….
+
+## 5. Ergänzung Fassung 2 (18.11.2026): Bauteile als Vorschlag
+Im Rumpf von `POST …/pruefauftraege` (und in ppp-api `POST /api/leistungscheck/pruefauftrag`) darf zusätzlich **optional** ein Block `komponenten` stehen. Fehlt er, ändert sich nichts (abwärtskompatibel).
+
+```json
+"komponenten": {
+  "herkunft": "eigentuemer",
+  "module": [{ "hersteller": "…", "modell": "…", "typ": "mono|poly|duenn|unbekannt", "wp": 250, "anzahl": 120,
+               "uoc": 37.8, "vmpp": 30.5, "impp": 8.2, "tk_uoc": -0.31 }],
+  "wechselrichter": [{ "hersteller": "…", "modell": "…", "kw_ac": 20, "anzahl": 1, "umax_dc": 1000, "mpp_min": 200, "mpp_max": 800,
+                       "strings": [{ "modul_index": 0, "module_je_string": 20, "anzahl": 3 }] }],
+  "kabel": [{ "seite": "dc|ac", "bezeichnung": "…", "querschnitt_mm2": 4, "laenge_m": 25, "leiter": "cu|al",
+              "kabeltyp": "solar|nym|nyy|h07rn|sonstig|unbekannt" }],
+  "steckverbinder_gemischt": true
+}
+```
+Grenzen: je Liste höchstens 20 Einträge, `strings` höchstens 20 je Gerät, Texte höchstens 80 Zeichen (bereinigt wie die übrigen Texte), Zahlen: wp 1–1000, anzahl 1–100 000, uoc/vmpp 1–200, impp 0,1–30, tk_uoc −1…0, kw_ac 0,1–10 000, umax_dc 50–2000, mpp 0–2000 (mpp_min < mpp_max), module_je_string 1–100, querschnitt_mm2 0,5–1000, laenge_m 0,1–5000. Alle Zahlenfelder optional. Unbekannte Schlüssel → 400 mit `feld`.
+
+**Regel R1 gilt weiter:** PV-Monteur legt den Block **nur** als `komponenten_vorschlag` am Auftrag ab, mit `herkunft: 'leistungscheck-eigentuemer'`, Zeitpunkt und `ungeprueft: true`. Er geht **nicht** automatisch in Anlagen-Stammdaten, Stringpläne, Messwerte, Grenzwerte oder Befunde. In der Auftragsansicht erscheint er als „Angaben des Eigentümers (ungeprüft)“; übernehmen kann ihn nur ein Mensch (spätere Ausbaustufe, nicht Teil dieser Fassung).
+
+Die Befunde der Website (z. B. „NYM-Leitung auf der DC-Seite“) kommen **nicht** als `befunde`, sondern wie bisher nur als Text in `einschaetzung.ursachen`/`pruefpunkte`.
