@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Status Ihres Prüfauftrags – PV Performance Pro</title>
+<link rel="icon" href="/favicon.svg">
+<style>
+  :root { color-scheme: dark; --papier: #f7f7f4; --sonne: #f2b705; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0e1620; color: var(--papier); font: 17px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 22px 80px; }
+  a { color: var(--sonne); }
+  .marke { font-weight: 700; text-decoration: none; color: var(--papier); }
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.1; margin: 28px 0 8px; }
+  .karte { background: rgba(255,255,255,.05); border: 1px solid rgba(247,247,244,.14); border-radius: 20px; padding: 22px 24px; margin-top: 20px; }
+  ol.schritte { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  ol.schritte li { display: flex; gap: 12px; align-items: center; opacity: .5; }
+  ol.schritte li.erledigt, ol.schritte li.aktuell { opacity: 1; }
+  ol.schritte span.punkt { width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(247,247,244,.35); flex: none; }
+  ol.schritte li.erledigt span.punkt { background: #5fb37f; border-color: #5fb37f; }
+  ol.schritte li.aktuell span.punkt { background: var(--sonne); border-color: var(--sonne); }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid rgba(247,247,244,.1); vertical-align: top; }
+  .klein { font-size: .9rem; color: rgba(247,247,244,.6); }
+  .fehler { color: #ff8a7a; }
+</style>
+</head>
+<body>
+<main>
+  <a class="marke" href="/">PV Performance Pro</a>
+  <h1>Status Ihres Prüfauftrags</h1>
+  <p id="kopf" class="klein">Wird geladen …</p>
+  <div class="karte"><ol class="schritte" id="schritte"></ol></div>
+  <div class="karte" id="termin" hidden></div>
+  <div class="karte" id="ergebnis" hidden></div>
+  <p class="klein">Fragen? <a href="mailto:info@photovoltaikperformancepro.com">info@photovoltaikperformancepro.com</a> · <a href="/leistungscheck/">Leistungscheck</a> · <a href="/datenschutz.html">Datenschutz</a></p>
+</main>
+<script src="/leistungscheck/status/status.js" defer></script>
+</body>
+</html>

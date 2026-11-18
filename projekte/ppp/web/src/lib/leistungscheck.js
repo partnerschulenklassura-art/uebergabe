@@ -39,6 +39,7 @@ export const ANNAHMEN = {
   freiflaeche: { unterkonstruktion: { preis: [110, 75], jahre: 30 }, montage: { preis: [150, 70], jahre: 30 }, elektro: { preis: [220, 130], jahre: 30 } }
 };
 
+const de = (x, d = 1) => Number(x).toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
 const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
 const rad = d => (d * Math.PI) / 180;
 const num = (v, d = null) => (v === '' || v == null || Number.isNaN(Number(v)) ? d : Number(v));
@@ -107,7 +108,7 @@ export function kabelQualitaet(n) {
     if (!ANNAHMEN.solarkabel.includes(typ))
       befunde.push({ id: 'dcKabeltyp', schwere: 'befund', text: `${k.name || 'DC-Leitung'}: Kabeltyp „${k.kabeltyp}“ ist kein Solarkabel nach DIN EN 50618. Im Freien altert die Isolierung schneller, Isolationsfehler werden wahrscheinlicher.` });
     if (num(k.querschnitt) && k.querschnitt < 4)
-      befunde.push({ id: 'dcQuerschnitt', schwere: 'hinweis', text: `${k.name || 'DC-Leitung'}: ${k.querschnitt} mm² ist für Stringleitungen knapp, üblich sind 4 oder 6 mm².` });
+      befunde.push({ id: 'dcQuerschnitt', schwere: 'hinweis', text: `${k.name || 'DC-Leitung'}: ${de(k.querschnitt, k.querschnitt % 1 ? 1 : 0)} mm² ist für Stringleitungen knapp, üblich sind 4 oder 6 mm².` });
   }
   if (n.steckverbinder?.mischung)
     befunde.push({ id: 'steckverbinder', schwere: 'befund', text: 'Steckverbinder verschiedener Hersteller sind ineinander gesteckt. Das ist nicht zulässig und eine häufige Ursache für heiße Kontakte, Lichtbögen und Ertragsverlust.' });
@@ -234,7 +235,7 @@ export function planung(n) {
     const ausrichtung = n.referenz ? 1 : ausrichtungsFaktor(f.azimut, f.neigung);
     const r = reihen(f, n.breite);
     if (r && r.verhaeltnis < 1)
-      befunde.push({ id: 'reihen', schwere: 'befund', text: `Reihenabstand ${r.abstand.toFixed(1)} m, nötig wären ${r.noetig.toFixed(1)} m (Sonne am 21. Dezember mittags ${r.sonnenhoehe.toFixed(0)}°): Reihen verschatten sich im Winterhalbjahr.` });
+      befunde.push({ id: 'reihen', schwere: 'befund', text: `Reihenabstand ${de(r.abstand, 1)} m, nötig wären ${de(r.noetig, 1)} m (Sonne am 21. Dezember mittags ${de(r.sonnenhoehe, 0)}°): Reihen verschatten sich im Winterhalbjahr.` });
     if (!n.referenz && ausrichtung < 0.8)
       befunde.push({ id: 'ausrichtung', schwere: 'hinweis', text: `${f.name || 'Fläche'}: Ausrichtung ${f.azimut}° und Neigung ${f.neigung}° bringen nur ${Math.round(ausrichtung * 100)} % einer Südfläche. Kein Fehler, aber die Erwartung muss dazu passen.` });
     return { ...f, ausrichtung, reihen: r };
@@ -247,13 +248,13 @@ export function planung(n) {
   const acVolllast = sum(leitungen, l => l.verlustAnteil);
   const spannungsfall = sum(leitungen, l => l.spannungsfall);
   if (acVolllast > a.acVerlustGrenze)
-    befunde.push({ id: 'acVerlust', schwere: 'befund', text: `AC-Leitungsverlust bei Volllast ${(acVolllast * 100).toFixed(1)} % (Planungswert höchstens ${a.acVerlustGrenze * 100} %): Querschnitt zu klein oder Leitung zu lang.` });
+    befunde.push({ id: 'acVerlust', schwere: 'befund', text: `AC-Leitungsverlust bei Volllast ${de((acVolllast * 100), 1)} % (Planungswert höchstens ${de(a.acVerlustGrenze * 100, 0)} %): Querschnitt zu klein oder Leitung zu lang.` });
   if (spannungsfall > a.spannungsanstiegGrenze)
-    befunde.push({ id: 'spannung', schwere: 'befund', text: `Spannungsanstieg auf der AC-Leitung ${(spannungsfall * 100).toFixed(1)} % (Grenze ${a.spannungsanstiegGrenze * 100} %): Wechselrichter schalten an sonnigen Mittagen wegen Überspannung ab.` });
+    befunde.push({ id: 'spannung', schwere: 'befund', text: `Spannungsanstieg auf der AC-Leitung ${de((spannungsfall * 100), 1)} % (Grenze ${de(a.spannungsanstiegGrenze * 100, 0)} %): Wechselrichter schalten an sonnigen Mittagen wegen Überspannung ab.` });
 
   const dcAc = n.kwp / n.kwAC;
   const kapp = kappung(dcAc);
-  if (dcAc > a.dcAcGrenze) befunde.push({ id: 'dcac', schwere: 'hinweis', text: `DC/AC-Verhältnis ${dcAc.toFixed(2)}: an sonnigen Mittagen wird gekappt, geschätzt ${(kapp * 100).toFixed(1)} % im Jahr.` });
+  if (dcAc > a.dcAcGrenze) befunde.push({ id: 'dcac', schwere: 'hinweis', text: `DC/AC-Verhältnis ${de(dcAc, 2)}: an sonnigen Mittagen wird gekappt, geschätzt ${de((kapp * 100), 1)} % im Jahr.` });
 
   const strings = n.wr.flatMap(w =>
     w.strings.map(st => {
@@ -282,7 +283,7 @@ export function planung(n) {
   const dcAnteil = dcLeitungen.length ? sum(dcLeitungen, l => l.energieAnteil) / dcLeitungen.length : 0;
   for (const l of dcLeitungen)
     if (l.verlustAnteil > a.dcVerlustGrenze)
-      befunde.push({ id: 'dcVerlust', schwere: 'hinweis', text: `${l.name}: DC-Verlust bei Volllast ${(l.verlustAnteil * 100).toFixed(1)} % (Planungswert höchstens ${a.dcVerlustGrenze * 100} %).` });
+      befunde.push({ id: 'dcVerlust', schwere: 'hinweis', text: `${l.name}: DC-Verlust bei Volllast ${de((l.verlustAnteil * 100), 1)} % (Planungswert höchstens ${de(a.dcVerlustGrenze * 100, 0)} %).` });
   befunde.push(...kabelQualitaet(n));
 
   // Angaben gegeneinander: Module laut Liste gegen angegebene Leistung

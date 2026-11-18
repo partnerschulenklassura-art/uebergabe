@@ -5,6 +5,7 @@ import { protokoll, mitPruefsumme, alsHtml } from '../lib/protokoll.js';
 import { ermittle, AUSRICHTUNG } from '../lib/leistungscheck-dienst.js';
 import { site } from '../site.config.js';
 import { url } from '../lib/url.js';
+import Komponentenerfassung, { komponentenLeer } from '../sections/Komponentenerfassung.jsx';
 
 const SCHRITTE = [
   ['ort', 'Standort'],
@@ -27,7 +28,8 @@ const LEER = {
   verlauf: '',
   meldung: '',
   reinigung: '',
-  eegCt: ''
+  eegCt: '',
+  komponenten: null
 };
 
 const kwh = v => `${Math.round(v).toLocaleString('de-DE')} kWh`;
@@ -43,6 +45,8 @@ const STUFE = {
 export default function Leistungscheck() {
   const [f, setF] = useState(LEER);
   const [mehr, setMehr] = useState(false);
+  const [profi, setProfi] = useState(false);
+  const setK = fn => setF(x => ({ ...x, komponenten: fn(x.komponenten || komponentenLeer()) }));
   const [status, setStatus] = useState({});
   const [laeuft, setLaeuft] = useState(false);
   const [erg, setErg] = useState(null);
@@ -268,9 +272,10 @@ export default function Leistungscheck() {
                     </select>
                   </label>
                 </div>
-                <p className="m-0 text-[0.95rem] text-papier/65">
-                  Module, Wechselrichter und Kabel einzeln erfassen wir bei der Prüfung vor Ort oder nach Datenblatt. Das macht die Rechnung noch genauer.
-                </p>
+                <button type="button" className="btn btn-line-light justify-self-start" aria-expanded={profi} onClick={() => { setProfi(p => !p); if (!f.komponenten) setF(x => ({ ...x, komponenten: komponentenLeer() })); }}>
+                  {profi ? 'Komponenten ausblenden' : 'Module, Wechselrichter und Kabel einzeln angeben'}
+                </button>
+                {profi && f.komponenten && <Komponentenerfassung k={f.komponenten} setK={setK} />}
               </div>
             )}
 
@@ -361,6 +366,19 @@ function Ergebnis({ erg, adresse, onProtokoll, onMail }) {
             </ol>
           </div>
 
+          {pr.planung.befunde.length > 0 && (
+            <div className="glass rim rounded-[22px] p-6 lg:col-span-2">
+              <h3 className="m-0 font-display text-[1.5rem] text-papier">Planung, Aufbau und Kabel</h3>
+              <ul className="mb-0 mt-4 grid gap-2 pl-5 text-papier/85">
+                {pr.planung.befunde.map(b => (
+                  <li key={b.id + b.text}>
+                    {b.schwere === 'gefahr' && <strong className="text-[#ff8a7a]">Gefahr: </strong>}
+                    {b.text}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="glass rim rounded-[22px] p-6">
             <h3 className="m-0 font-display text-[1.5rem] text-papier">Das geht ohne Termin vor Ort</h3>
             <ul className="mb-0 mt-4 grid gap-2 pl-5 text-papier/85">
@@ -420,6 +438,8 @@ function Ergebnis({ erg, adresse, onProtokoll, onMail }) {
   );
 }
 
+const kurz = (t, n) => (t && t.length > n ? t.slice(0, n - 1).trimEnd() + '…' : t);
+
 /** Prüfauftrag direkt an PV-Monteur (über ppp-api). Ist der Dienst nicht bereit, bleibt die E-Mail. */
 function Pruefanfrage({ erg, adresse, onMail }) {
   const { r, pr } = erg;
@@ -442,21 +462,23 @@ function Pruefanfrage({ erg, adresse, onMail }) {
         art: r.eingabe.art,
         kwp: r.eingabe.kwp,
         inbetriebnahme_jahr: r.eingabe.jahr,
-        teilflaechen: r.eingabe.felder.map(f => ({ azimut: f.azimut, neigung: f.neigung, kwp: Math.round(f.kwp * 100) / 100 }))
+        teilflaechen: r.eingabe.felder.slice(0, 20).map(f => ({ azimut: f.azimut, neigung: f.neigung, kwp: Math.round(f.kwp * 100) / 100 }))
       },
       einschaetzung: {
         stufe: z.stufe ?? null,
-        performance: z.performance ?? null,
+        performance: z.performance != null ? Math.min(5, Math.max(0, z.performance)) : null,
         soll_kwh: Math.round(z.sollHeute),
         ist_kwh: z.ist != null ? Math.round(z.ist) : null,
         zerlegung: { alterung: Math.round(z.alterung || 0), planung: Math.round(z.planung || 0), ac: Math.round(z.ac || 0), rest: Math.round(z.rest || 0) },
-        ursachen: pr.ursachen.map(u => u.titel),
-        pruefpunkte: r.vorOrt.pruefpunkte,
+        ursachen: pr.ursachen.slice(0, 10).map(u => kurz(u.titel, 80)),
+        pruefpunkte: r.vorOrt.pruefpunkte.slice(0, 20).map(p => ({ ursache: kurz(p.ursache, 80), pruefung: kurz(p.pruefung, 500) })),
         protokoll_pruefsumme: pr.pruefsumme
       },
-      wunschtermin: a.wunschtermin.trim(),
+      wunschtermin: kurz(a.wunschtermin.trim(), 300),
       einwilligung: { datenschutz: a.einwilligung, zeitpunkt: new Date().toISOString(), fassung: 'ppp-datenschutz-2026-11-18' }
     };
+    // Ohne Koordinaten oder Einstufung nimmt PV-Monteur den Auftrag nicht an: dann gleich per E-Mail.
+    if (rumpf.anlage.lat == null || rumpf.anlage.lon == null || !rumpf.einschaetzung.stufe) return setZustand({ s: 'mail' });
     try {
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 20000);
@@ -465,7 +487,7 @@ function Pruefanfrage({ erg, adresse, onMail }) {
       const d = await res.json().catch(() => ({}));
       if (res.ok) return setZustand({ s: 'fertig', d });
       if (res.status === 503 || res.status === 404 || res.status === 409) return setZustand({ s: 'mail' });
-      setZustand({ s: 'fehler', text: d.fehler || `Fehler ${res.status}` });
+      setZustand({ s: 'fehler', text: d.fehler || `Fehler ${res.status}`, feld: d.feld });
     } catch {
       setZustand({ s: 'mail' });
     }
@@ -519,7 +541,7 @@ function Pruefanfrage({ erg, adresse, onMail }) {
         </label>
         <label>
           <span className="lbl">Telefon</span>
-          <input required type="tel" autoComplete="tel" value={a.telefon} onChange={set('telefon')} />
+          <input required type="tel" autoComplete="tel" minLength={6} maxLength={30} value={a.telefon} onChange={set('telefon')} />
         </label>
         <label>
           <span className="lbl">E-Mail</span>

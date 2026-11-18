@@ -34,6 +34,49 @@ export const AUSRICHTUNG = {
   nord: { titel: 'Nord', felder: [180] }
 };
 
+const zahlK = v => (v === '' || v == null ? null : Number(String(v).replace(',', '.')));
+
+/** Detailerfassung (Module, Wechselrichter mit Strings, Kabel) in die Felder des Rechenkerns übersetzen. Leere Zeilen fallen weg. */
+export function komponentenAusFormular(k) {
+  if (!k) return {};
+  const module = (k.module || [])
+    .filter(m => zahlK(m.wp) && zahlK(m.anzahl))
+    .map(m => ({
+      hersteller: m.hersteller || undefined,
+      modell: m.modell || undefined,
+      typ: m.typ || 'mono',
+      wp: zahlK(m.wp),
+      anzahl: zahlK(m.anzahl),
+      uoc: zahlK(m.uoc) ?? undefined,
+      vmpp: zahlK(m.vmpp) ?? undefined,
+      impp: zahlK(m.impp) ?? undefined,
+      tkUoc: zahlK(m.tkUoc) ?? undefined
+    }));
+  const wechselrichter = (k.wechselrichter || [])
+    .filter(w => zahlK(w.kwAC))
+    .map(w => ({
+      hersteller: w.hersteller || undefined,
+      typ: w.typ || undefined,
+      kwAC: zahlK(w.kwAC),
+      anzahl: zahlK(w.anzahl) || 1,
+      umaxDC: zahlK(w.umaxDC) ?? undefined,
+      mppMin: zahlK(w.mppMin) ?? undefined,
+      mppMax: zahlK(w.mppMax) ?? undefined,
+      strings: zahlK(w.moduleJeString) ? [{ modul: Number(w.modul) || 0, moduleJeString: zahlK(w.moduleJeString), anzahl: zahlK(w.stringAnzahl) || 1 }] : []
+    }));
+  const kabel = (k.kabel || []).filter(x => zahlK(x.querschnitt) && zahlK(x.laenge));
+  const ab = x => ({ name: x.name || undefined, querschnitt: zahlK(x.querschnitt), laenge: zahlK(x.laenge), material: x.material === 'al' ? 'al' : 'cu', kabeltyp: x.kabeltyp || undefined });
+  const aus = {};
+  if (module.length) aus.module = module;
+  if (wechselrichter.length) aus.wechselrichter = wechselrichter;
+  const dc = kabel.filter(x => x.seite === 'dc').map(ab);
+  const ac = kabel.filter(x => x.seite !== 'dc').map(ab);
+  if (dc.length) aus.dc = dc;
+  if (ac.length) aus.ac = ac;
+  if (k.steckverbinderMischung) aus.steckverbinder = { mischung: true };
+  return aus;
+}
+
 /** Aus dem kleinen Formular die Eingabe für den Rechenkern bauen. */
 export function eingabeAusFormular(f) {
   const kwp = Number(String(f.kwp).replace(',', '.')) || 0;
@@ -61,6 +104,7 @@ export function eingabeAusFormular(f) {
       abschaltungenNetzspannung: f.meldung === 'netz',
       tageSeitReinigung: f.reinigung === 'jahr' ? 200 : f.reinigung === 'kuerzlich' ? 60 : null
     },
+    ...komponentenAusFormular(f.komponenten),
     eegCt: zahl(f.eegCt) ?? undefined,
     evAnteil: zahl(f.evAnteil) ?? undefined,
     stichjahr: new Date().getFullYear()
