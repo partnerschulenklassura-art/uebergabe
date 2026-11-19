@@ -17,3 +17,9 @@
 
 ## 2026-11-18 – Freigabe für live
 - `ziel: live` in einem Auftrag von Claude Desktop gilt als Freigabe durch Andre für genau diesen Auftrag. Nginx, Cron, .env und neue Dienste bleiben weiter bei Andre.
+
+## 2026-11-19 – Tagescockpit (`/var/www/eid/cockpit`, Port 3150)
+- Für alle Vorhaben (Bereiche ppp, unternehmensdigitalisierung, mf32, didaktos), Vorgabe ppp. Stufen: 1 Heute/Kalender/Aufgaben, 2 Mail (IMAP, nur lesen und zuordnen, Antworten in Outlook), 3 Anlagenakte mit Zeitstrahl, 4 Fristen, ICS-Abo, Tagesmail 7 Uhr.
+- Sperre nach 5 Fehlversuchen gilt für das ganze Cockpit (ein Benutzer); Schutz vor Aussperren durch die IP-Freigabe in Nginx. So gewollt.
+- Sitzungen nur im Arbeitsspeicher (14 Tage), nach Neustart neu anmelden reicht.
+- PV-Monteur liefert dem Cockpit nur Lesedaten über Schlüsselart `cockpit`, ohne Kontaktdaten und Messwerte. Ausrollen über Release-Zweig `release-2026-11-19-cockpit`.
