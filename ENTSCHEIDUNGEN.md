@@ -23,3 +23,8 @@
 - Sperre nach 5 Fehlversuchen gilt für das ganze Cockpit (ein Benutzer); Schutz vor Aussperren durch die IP-Freigabe in Nginx. So gewollt.
 - Sitzungen nur im Arbeitsspeicher (14 Tage), nach Neustart neu anmelden reicht.
 - PV-Monteur liefert dem Cockpit nur Lesedaten über Schlüsselart `cockpit`, ohne Kontaktdaten und Messwerte. Ausrollen über Release-Zweig `release-2026-11-19-cockpit`.
+
+## 2026-11-21 – Arbeitsteilung Server / Laptop
+- Claude Code läuft NUR auf dem Server srv1171441, nicht auf Andres Laptop. Was auf dem Laptop laufen soll, liefert Claude Code als Repo mit `install.sh`, das Andre mit einem Befehl startet.
+- Claude Desktop schreibt direkt in dieses Repo (GitHub). Andre muss keine Dateien per scp übertragen.
+- Flux (Rechnungstool) läuft künftig lokal auf dem Laptop; Auftrag unter `projekte/flux/`. Für den Watcher fehlt noch der Eintrag `flux=/root/Projekte/flux` in `server/projekte.conf` – bitte serverseitig ergänzen.
