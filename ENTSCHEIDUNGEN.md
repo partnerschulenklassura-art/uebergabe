@@ -28,3 +28,7 @@
 - Claude Code läuft NUR auf dem Server srv1171441, nicht auf Andres Laptop. Was auf dem Laptop laufen soll, liefert Claude Code als Repo mit `install.sh`, das Andre mit einem Befehl startet.
 - Claude Desktop schreibt direkt in dieses Repo (GitHub). Andre muss keine Dateien per scp übertragen.
 - Flux (Rechnungstool) läuft künftig lokal auf dem Laptop; Auftrag unter `projekte/flux/`. Für den Watcher fehlt noch der Eintrag `flux=/root/Projekte/flux` in `server/projekte.conf` – bitte serverseitig ergänzen.
+
+## 2026-11-27 – PV-Monteur: App jetzt, Offline-Version (.exe/Stick) eingeplant
+- Für die ersten Kunden (Pilot IWS GmbH) wird PV-Monteur als installierbare Web-App ausgeliefert (PC über Chrome/Edge, Handy über Startbildschirm).
+- Eine echte Offline-Variante als Windows-Programm (.exe) bzw. auf dem Stick ist als nächstes größeres PV-Monteur-Projekt eingeplant. Vor dem Bau ein Konzept: Datenhaltung lokal, Sicherung, Updates, Abgleich mit dem Server, Lizenz/Zugänge.
